@@ -1,0 +1,12 @@
+# Use this only when the web server's document root is this folder (e.g. a cPanel
+# subdomain pointing at the project folder). If you can point the document root
+# at the public/ folder instead, do that; then this file is not used.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Never serve the project files themselves
+<FilesMatch "^\.env|composer\.(json|lock)|artisan$">
+    Require all denied
+</FilesMatch>
