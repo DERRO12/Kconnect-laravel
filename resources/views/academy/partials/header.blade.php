@@ -106,9 +106,7 @@
                         <ul class="dropdown-menu dropdown-menu-end">
                             @if ($is_admin_area)
                                 <li><a class="dropdown-item" href="{{ url('admin/dashboard') }}"><i class="bi bi-grid"></i> K-Connect Admin</a></li>
-                                @if (isLoggedIn())
-                                    <li><a class="dropdown-item" href="{{ url('academy/dashboard') }}"><i class="bi bi-person"></i> Switch to User</a></li>
-                                @endif
+                                <li><a class="dropdown-item" href="{{ url('academy/dashboard') }}"><i class="bi bi-person"></i> Switch to Learner View</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item text-danger" href="{{ url('admin/logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
                             @else

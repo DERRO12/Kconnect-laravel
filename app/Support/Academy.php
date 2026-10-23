@@ -35,7 +35,18 @@ class Academy
     {
         $conn = getKADB();
         if (! $conn) {
-            throw new HttpException(503, 'K-Academy is not available right now (its database could not be reached).');
+            $reason = '';
+            try {
+                \Illuminate\Support\Facades\DB::connection('kacademy')->getPdo();
+            } catch (\Throwable $e) {
+                $reason = $e->getMessage();
+                \Illuminate\Support\Facades\Log::error('K-Academy database (KA_DB_* in .env) could not be reached: '.$reason);
+            }
+            $message = 'K-Academy is not available right now (its database could not be reached).';
+            if (config('app.debug') && $reason !== '') {
+                $message .= ' Check the KA_DB_* settings in .env and that the database '.config('database.connections.kacademy.database').' exists. Error: '.$reason;
+            }
+            throw new HttpException(503, $message);
         }
 
         return $conn;
@@ -139,6 +150,12 @@ class Academy
         static $cache = [];
         $employeeId = session('employee_id');
         if (! $employeeId) {
+            // A K-Connect admin who is not also signed in as an employee opens the learner pages
+            // as their K-Academy admin account, so no second login is needed.
+            if (isAdminLoggedIn() && ($adminId = self::adminUserId())) {
+                return $cache['admin'] ??= (self::db()->selectOne('SELECT * FROM users WHERE id = ?', [$adminId]) ?: null);
+            }
+
             return null;
         }
         if (array_key_exists($employeeId, $cache)) {
