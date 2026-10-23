@@ -19,6 +19,18 @@ class FileController extends Controller
             abort(404);
         }
 
-        return response()->file($file, ['Cache-Control' => 'public, max-age=604800']);
+        // PHP's file type guess says text/plain for .css/.js, which browsers refuse to use
+        $types = [
+            'css' => 'text/css', 'js' => 'application/javascript', 'svg' => 'image/svg+xml', 'json' => 'application/json',
+            'woff' => 'font/woff', 'woff2' => 'font/woff2', 'ttf' => 'font/ttf', 'mp4' => 'video/mp4', 'webm' => 'video/webm',
+            'ogg' => 'video/ogg', 'm4v' => 'video/mp4', 'mov' => 'video/quicktime', 'pdf' => 'application/pdf',
+        ];
+        $headers = ['Cache-Control' => 'public, max-age=604800'];
+        $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+        if (isset($types[$ext])) {
+            $headers['Content-Type'] = $types[$ext];
+        }
+
+        return response()->file($file, $headers);
     }
 }

@@ -123,12 +123,13 @@ $current_page = basename(kc_self());
                     <i class="fas fa-chevron-down dropdown-arrow"></i>
                 </a>
                 <ul class="submenu">
-                    <li><a href="{{ url('academy/admin/dashboard') }}"><i class="fas fa-tachometer-alt"></i> Academy Dashboard</a></li>
-                    <li><a href="{{ url('academy/admin/manage_courses') }}"><i class="fas fa-book"></i> Courses &amp; Lessons</a></li>
-                    <li><a href="{{ url('academy/admin/manage_quizzes') }}"><i class="fas fa-question-circle"></i> Quizzes</a></li>
-                    <li><a href="{{ url('academy/admin/pending-certificates') }}"><i class="fas fa-certificate"></i> Certificates</a></li>
-                    <li><a href="{{ url('academy/admin/manage_users') }}"><i class="fas fa-user-graduate"></i> Learners</a></li>
-                    <li><a href="{{ url('academy/admin/reports') }}"><i class="fas fa-chart-bar"></i> Reports</a></li>
+                    <li><a href="{{ url('academy/admin/dashboard') }}" class="{{ request()->is('academy/admin/dashboard*') ? 'active' : '' }}"><i class="fas fa-tachometer-alt"></i> Academy Dashboard</a></li>
+                    <li><a href="{{ url('academy/admin/manage_courses') }}" class="{{ request()->is('academy/admin/manage_courses*', 'academy/admin/add_course*', 'academy/admin/edit_course*', 'academy/admin/manage_lessons*') ? 'active' : '' }}"><i class="fas fa-book"></i> Courses &amp; Lessons</a></li>
+                    <li><a href="{{ url('academy/admin/manage_quizzes') }}" class="{{ request()->is('academy/admin/manage_quizzes*', 'academy/admin/manage_quiz*', 'academy/admin/add_quiz*', 'academy/admin/edit_quiz*', 'academy/admin/preview_quiz*', 'academy/admin/manage_quiz_questions*', 'academy/admin/quiz_results*') ? 'active' : '' }}"><i class="fas fa-question-circle"></i> Quizzes</a></li>
+                    <li><a href="{{ url('academy/admin/pending-certificates') }}" class="{{ request()->is('academy/admin/pending-certificates*', 'academy/admin/approve-certificate*') ? 'active' : '' }}"><i class="fas fa-certificate"></i> Certificates</a></li>
+                    <li><a href="{{ url('academy/admin/hero-video') }}" class="{{ request()->is('academy/admin/hero-video*') ? 'active' : '' }}"><i class="fas fa-video"></i> Home Page Video</a></li>
+                    <li><a href="{{ url('academy/admin/reports') }}" class="{{ request()->is('academy/admin/reports*') ? 'active' : '' }}"><i class="fas fa-chart-bar"></i> Reports</a></li>
+                    <li><a href="{{ url('academy/admin/activity-logs') }}" class="{{ request()->is('academy/admin/activity-logs*') ? 'active' : '' }}"><i class="fas fa-history"></i> Activity Logs</a></li>
                 </ul>
             </li>
             

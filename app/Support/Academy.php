@@ -250,6 +250,24 @@ class Academy
         return $id = $row ? (int) $row['id'] : null;
     }
 
+    /**
+     * The K-Connect admin sidebar for K-Academy admin pages. Its links are written relative to /admin/,
+     * so they are made absolute here (the K-Academy pages live under /academy/admin/).
+     */
+    public static function kconnectAdminSidebar(): string
+    {
+        $html = view('admin.partials.sidebar')->render();
+
+        return preg_replace_callback('/\bhref="([^"]*)"/', function ($m) {
+            $href = html_entity_decode($m[1]);
+            if ($href === '' || preg_match('#^(https?:|/|\#|javascript:|mailto:|tel:)#i', $href)) {
+                return $m[0];
+            }
+
+            return 'href="'.e(url('admin/'.$href)).'"';
+        }, $html);
+    }
+
     /** Admin pages: K-Connect admin login. */
     public static function requireAdmin(): void
     {

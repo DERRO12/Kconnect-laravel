@@ -20,6 +20,7 @@ Route::get('/academy/change-password', fn () => redirect(url('change-password'))
 Route::get('/academy/settings', fn () => redirect(url('academy/profile')));
 Route::get('/academy/view-certificate', fn (Illuminate\Http\Request $r) => redirect(url('academy/certificates').($r->getQueryString() ? '?'.$r->getQueryString() : '')));
 Route::get('/academy/my-certificates', fn () => redirect(url('academy/certificates')));
+Route::get('/academy/certificate', fn (Illuminate\Http\Request $r) => redirect(url('academy/download-certificate').($r->getQueryString() ? '?'.$r->getQueryString() : '')));
 Route::get('/academy/course', fn (Illuminate\Http\Request $r) => redirect(url('academy/course-overview').($r->getQueryString() ? '?'.$r->getQueryString() : '')));
 // Files of public/academy-files/assets when the web server does not apply public/.htaccess (php artisan serve).
 Route::get('/academy/assets/{path}', [App\Http\Controllers\Academy\FileController::class, 'asset'])->where('path', '.*');

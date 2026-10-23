@@ -5,47 +5,6 @@
 
             <!-- Main Content -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-                <!-- Top Navigation -->
-                <nav class="navbar navbar-expand navbar-light bg-white mb-4 rounded-bottom shadow-sm">
-                    <div class="container-fluid">
-                        <button class="btn btn-outline-secondary d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu">
-                            <i class="bi bi-list"></i>
-                        </button>
-                        
-                        <div class="navbar-nav ms-auto">
-                            <div class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                                    <i class="bi bi-bell"></i>
-                                    <?php if ($stats['pending_users'] > 0): ?>
-                                        <span class="badge bg-danger rounded-pill"><?php echo $stats['pending_users']; ?></span>
-                                    <?php endif; ?>
-                                </a>
-                                <div class="dropdown-menu dropdown-menu-end">
-                                    <h6 class="dropdown-header">Notifications</h6>
-                                    <?php if ($stats['pending_users'] > 0): ?>
-                                        <a class="dropdown-item" href="manage_users?status=pending">
-                                            <i class="bi bi-person-plus text-warning"></i>
-                                            <?php echo $stats['pending_users']; ?> pending approvals
-                                        </a>
-                                    <?php else: ?>
-                                        <span class="dropdown-item-text text-muted">No new notifications</span>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                            
-                            <div class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                                    <i class="bi bi-person-circle"></i>
-                                    Admin
-                                </a>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item text-danger" href="../logout">Logout</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </nav>
 
                 <!-- Welcome Banner -->
                 <div class="welcome-banner-admin mb-4">
@@ -62,18 +21,18 @@
                             </div>
                             <div class="stat-details">
                                 <h3><?php echo $stats['total_users']; ?></h3>
-                                <p>Total Users</p>
+                                <p>Learners</p>
                             </div>
                         </div>
                     </div>
                     <div class="col-xl-2 col-md-4 col-sm-6">
                         <div class="stat-card-admin gradient-green">
                             <div class="stat-icon">
-                                <i class="bi bi-person-check"></i>
+                                <i class="bi bi-hourglass-split"></i>
                             </div>
                             <div class="stat-details">
-                                <h3><?php echo $stats['pending_users']; ?></h3>
-                                <p>Pending</p>
+                                <h3><a href="pending-certificates" class="text-reset text-decoration-none"><?php echo (int) $pdo->query("SELECT COUNT(*) FROM certificates WHERE status = 'pending'")->fetchColumn(); ?></a></h3>
+                                <p>To Approve</p>
                             </div>
                         </div>
                     </div>

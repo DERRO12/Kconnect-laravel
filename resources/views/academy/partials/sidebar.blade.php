@@ -1,4 +1,5 @@
 {{-- K-Academy side menu (was kacademy/includes/sidebar.php). Variables come from App\Support\Academy::pageVars(). --}}
+@if (!$is_admin_area)
 <!-- Mobile Sidebar Toggle Button -->
 <div class="mobile-sidebar-toggle d-md-none">
     <button class="btn btn-primary" type="button" id="sidebarToggle">
@@ -24,46 +25,21 @@
             <a href="{{ $is_admin_area ? url('academy/admin/dashboard') : url('academy/dashboard') }}" class="text-decoration-none">
                 <h4 class="gradient-text fw-bold">K-Academy</h4>
             </a>
-            @if ($is_admin_area)
-                <!-- Admin Menu -->
-                @foreach ([
-                    ['dashboard', ['dashboard.php'], 'bi-speedometer2', 'Dashboard'],
-                    ['hero-video', ['hero-video.php'], 'bi-camera-video', 'Hero Video'],
-                    ['manage_users', ['manage_users.php', 'user-details.php'], 'bi-people', 'Manage Users'],
-                    ['manage_courses', ['manage_courses.php', 'add_course.php', 'edit_course.php'], 'bi-book', 'Manage Courses'],
-                    ['manage_lessons', ['manage_lessons.php'], 'bi-list-check', 'Manage Lessons'],
-                    ['pending-certificates', ['pending-certificates.php', 'approve-certificate.php'], 'bi-hourglass-split', 'Pending Certificates'],
-                    ['manage_quizzes', ['manage_quizzes.php', 'manage_quiz.php', 'edit_quiz.php', 'manage_quiz_questions.php'], 'bi-patch-question', 'Manage Quizzes'],
-                    ['reports', ['reports.php'], 'bi-graph-up', 'Reports'],
-                    ['activity-logs', ['activity-logs.php'], 'bi-clock-history', 'Activity Logs'],
-                    ['settings', ['settings.php'], 'bi-gear', 'Settings'],
-                ] as [$page, $pages, $icon, $label])
-                <li class="nav-item">
-                    <a class="nav-link {{ in_array($current_page, $pages) ? 'active' : '' }}" href="{{ url('academy/admin/'.$page) }}">
-                        <i class="bi {{ $icon }}"></i>
-                        <span>{{ $label }}</span>
-                        @if ($page === 'manage_users' && $pending_count > 0)
-                            <span class="badge bg-danger rounded-pill float-end">{{ $pending_count }}</span>
-                        @elseif ($page === 'pending-certificates' && $pending_certificates > 0)
-                            <span class="badge bg-warning float-end">{{ $pending_certificates }}</span>
-                        @endif
-                    </a>
-                </li>
-                @endforeach
-                <li class="nav-item mt-4">
-                    <a class="nav-link" href="{{ url('admin/dashboard') }}">
-                        <i class="bi bi-arrow-left-circle"></i>
-                        <span>K-Connect Admin</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-danger" href="{{ url('admin/logout') }}">
-                        <i class="bi bi-box-arrow-right"></i>
-                        <span>Logout</span>
-                    </a>
-                </li>
-            @else
-                <!-- User Menu -->
+        </div>
+
+        <!-- User Info -->
+        @if (!empty($user))
+        <div class="user-info text-center mb-4 px-3">
+            <div class="avatar-circle bg-gradient text-white mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; font-size: 24px;">
+                {{ strtoupper(substr($user['full_name'] ?? 'U', 0, 1)) }}
+            </div>
+            <h6 class="mb-0">{{ $user['full_name'] ?? '' }}</h6>
+            <small class="text-secondary">{{ $user['employee_code'] ?? '' }}</small>
+        </div>
+        @endif
+
+        <!-- Sidebar Menu -->
+        <ul class="nav flex-column">
                 @foreach ([
                     ['dashboard', ['dashboard.php'], 'bi-speedometer2', 'Dashboard'],
                     ['my-courses', ['my-courses.php'], 'bi-book', 'My Courses'],
@@ -92,13 +68,20 @@
                         <span>Back to K-Connect</span>
                     </a>
                 </li>
+                @if (isAdminLoggedIn())
                 <li class="nav-item">
-                    <a class="nav-link text-danger" href="{{ url('logout') }}">
+                    <a class="nav-link" href="{{ url('academy/admin/dashboard') }}">
+                        <i class="bi bi-speedometer2"></i>
+                        <span>K-Academy Admin</span>
+                    </a>
+                </li>
+                @endif
+                <li class="nav-item">
+                    <a class="nav-link text-danger" href="{{ isLoggedIn() ? url('logout') : url('admin/logout') }}">
                         <i class="bi bi-box-arrow-right"></i>
                         <span>Logout</span>
                     </a>
                 </li>
-            @endif
         </ul>
 
         <!-- Sidebar Footer -->
@@ -444,3 +427,4 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>@endverbatim
+@endif
