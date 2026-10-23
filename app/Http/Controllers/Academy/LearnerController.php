@@ -148,6 +148,10 @@ class LearnerController extends Controller
             }
         }
 
+        // Home page video the admin set (academy/admin/hero-video)
+        $hero = $pdo->query("SELECT * FROM homepage_hero WHERE status = 1 LIMIT 1")->fetch();
+        $hero_video = $hero ? Academy::video($hero['video_url']) : ['kind' => 'none'];
+
         return view('academy.dashboard', get_defined_vars());
     }
 

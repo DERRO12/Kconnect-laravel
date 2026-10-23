@@ -111,7 +111,7 @@ It still uses its own database, `kiboko_academy` (the `KA_DB_*` settings), with 
 - Uploaded files are stored in `public/academy-files/assets/uploads/` (`courses`, `videos`,
   `attachments`, `profiles`). They are not in git. To copy them from the old K-Academy site, run
   `php artisan kconnect:import-academy-files <old K-Academy folder>`. This only copies.
-- The `KA_CERT_*` settings are the names printed on certificates. `KA_MAX_VIDEO_MB` is the largest video upload (default 500).
+- The `KA_CERT_*` settings are the names printed on certificates. `KA_MAX_VIDEO_MB` is the largest lesson video (default 2048). Videos upload in 4MB pieces, so PHP's upload_max_filesize does not need raising.
   PHP must allow uploads that big. `public/.user.ini` (cPanel) and `public/.htaccess` (XAMPP) set the limit to 512M.
   On XAMPP, if uploads are still refused, raise `upload_max_filesize` and `post_max_size` in `php.ini`.
 - The old K-Academy addresses (`login.php`, `course-player.php?id=...`, `admin/manage_courses.php`...)

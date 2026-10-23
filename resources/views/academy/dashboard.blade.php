@@ -31,6 +31,40 @@
                     </div>
                 </div>
 
+                <?php if ($hero_video['kind'] !== 'none'): ?>
+                <!-- Featured video (set by the K-Academy admin) -->
+                <div class="ka-hero card border-0 shadow-sm mb-4">
+                    <div class="row g-0 align-items-stretch">
+                        <div class="col-lg-7 col-xl-6">
+                            <div class="ka-hero-frame">
+                                <?php if ($hero_video['kind'] === 'file'): ?>
+                                    <video controls preload="metadata" playsinline>
+                                        <source src="<?php echo htmlspecialchars($hero_video['src']); ?>">
+                                    </video>
+                                <?php else: ?>
+                                    <iframe src="<?php echo htmlspecialchars($hero_video['embed']); ?>"
+                                            title="<?php echo htmlspecialchars($hero['video_title'] ?: 'K-Academy video'); ?>"
+                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                                            allowfullscreen loading="lazy"></iframe>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <div class="col-lg-5 col-xl-6">
+                            <div class="ka-hero-body">
+                                <span class="ka-hero-tag"><i class="bi bi-play-circle-fill"></i> Featured video</span>
+                                <h4><?php echo $hero['video_title'] ?: 'Welcome to K-Academy'; ?></h4>
+                                <?php if (!empty($hero['video_description'])): ?>
+                                    <p class="text-secondary mb-3"><?php echo nl2br($hero['video_description']); ?></p>
+                                <?php endif; ?>
+                                <a href="browse-courses" class="btn btn-primary btn-sm align-self-start">
+                                    <i class="bi bi-compass"></i> Browse courses
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
+
                 <!-- Stats Cards -->
                 <div class="row g-4 mb-4">
                     <div class="col-md-3 col-sm-6">

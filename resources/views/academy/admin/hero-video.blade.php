@@ -25,11 +25,11 @@
                             <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                             
                             <div class="mb-3">
-                                <label class="form-label">YouTube Video URL</label>
+                                <label class="form-label">Video link</label>
                                 <input type="url" name="video_url" class="form-control" 
                                        value="<?php echo htmlspecialchars($hero['video_url'] ?? ''); ?>" 
                                        placeholder="https://www.youtube.com/watch?v=..." required>
-                                <small class="text-muted">Enter the full YouTube video URL</small>
+                                <small class="text-muted">A YouTube, Vimeo or Google Drive (shared) link, or a direct .mp4 address. When Active is ticked it shows at the top of every learner's K-Academy dashboard.</small>
                             </div>
                             
                             <div class="mb-3">

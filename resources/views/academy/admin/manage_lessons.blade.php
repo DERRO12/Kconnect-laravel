@@ -111,7 +111,7 @@
                     <h5 class="modal-title">Add New Lesson</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form action="add_lesson" method="POST" enctype="multipart/form-data">
+                <form action="add_lesson" method="POST" enctype="multipart/form-data" data-ka-video-upload>
                     <div class="modal-body">
                         <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                         <input type="hidden" name="course_id" value="<?php echo $course_id; ?>">
@@ -148,9 +148,9 @@
                         
                         <div class="mb-3 d-none" id="video_upload_field">
                             <label for="video_file" class="form-label">Upload Video</label>
-                            <input type="file" class="form-control" id="video_file" name="video_file" 
+                            <input type="file" class="form-control" id="video_file" name="video_file" data-ka-video data-max-mb="<?php echo (int) config('academy.max_video_mb'); ?>" 
                                    accept="video/mp4,video/webm,video/ogg,video/quicktime,.m4v">
-                            <div class="form-text">Max size: <?php echo (int) config('academy.max_video_mb'); ?>MB. Formats: MP4, WebM, OGG, M4V, MOV (MP4 plays everywhere)</div>
+                            <div class="form-text">Max size: <?php echo (int) config('academy.max_video_mb'); ?>MB, long videos are fine (they upload in pieces with a progress bar). Formats: MP4, WebM, OGG, M4V, MOV (MP4 plays everywhere)</div>
                         </div>
                         
                         <div class="mb-3">
@@ -182,15 +182,15 @@
                     <h5 class="modal-title">Upload Several Videos at Once</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form action="bulk_add_lessons" method="POST" enctype="multipart/form-data" id="bulkLessonForm">
+                <form action="bulk_add_lessons" method="POST" enctype="multipart/form-data" id="bulkLessonForm" data-ka-video-upload>
                     <div class="modal-body">
                         <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                         <input type="hidden" name="course_id" value="<?php echo $course_id; ?>">
                         <div class="mb-3">
                             <label for="video_files" class="form-label">Video files <span class="text-danger">*</span></label>
-                            <input type="file" class="form-control" id="video_files" name="video_files[]" multiple required
+                            <input type="file" class="form-control" id="video_files" name="video_files[]" multiple required data-ka-videos data-max-mb="<?php echo (int) config('academy.max_video_mb'); ?>"
                                    accept="video/mp4,video/webm,video/ogg,video/quicktime,.m4v">
-                            <div class="form-text">Each video becomes a lesson named after its file, added in file-name order (name them 01 Intro, 02 Safety...). Edit each lesson afterwards to add content, duration and attachments. Max <?php echo (int) config('academy.max_video_mb'); ?>MB per video, and the whole upload must fit the server's upload limit.</div>
+                            <div class="form-text">Each video becomes a lesson named after its file, added in file-name order (name them 01 Intro, 02 Safety...). Edit each lesson afterwards to add content, duration and attachments. Max <?php echo (int) config('academy.max_video_mb'); ?>MB per video. Videos upload one after another with a progress bar; keep this page open until it finishes.</div>
                         </div>
                         <div class="small text-secondary" id="bulkLessonSummary"></div>
                     </div>
@@ -212,13 +212,10 @@
             for (var i = 0; i < input.files.length; i++) total += input.files[i].size;
             summary.textContent = input.files.length ? input.files.length + ' video(s), ' + (total / 1048576).toFixed(1) + ' MB in total' : '';
         });
-        document.getElementById('bulkLessonForm').addEventListener('submit', function () {
-            var b = this.querySelector('button[type=submit]');
-            b.disabled = true;
-            b.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Uploading...';
-        });
     });
     </script>
+    <meta name="ka-chunk-url" content="upload-video-chunk">
+    <script src="../assets/js/ka-video-upload.js"></script>
 
     <!-- Edit Lesson Modal -->
     <div class="modal fade" id="editLessonModal" tabindex="-1">
@@ -228,7 +225,7 @@
                     <h5 class="modal-title">Edit Lesson</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form action="edit_lesson" method="POST" enctype="multipart/form-data" id="editLessonForm">
+                <form action="edit_lesson" method="POST" enctype="multipart/form-data" id="editLessonForm" data-ka-video-upload>
                     <div class="modal-body">
                         <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                         <input type="hidden" name="lesson_id" id="edit_lesson_id">
@@ -266,7 +263,7 @@
                         
                         <div class="mb-3 d-none" id="edit_video_upload_field">
                             <label for="edit_video_file" class="form-label">Upload New Video</label>
-                            <input type="file" class="form-control" id="edit_video_file" name="video_file" 
+                            <input type="file" class="form-control" id="edit_video_file" name="video_file" data-ka-video data-max-mb="<?php echo (int) config('academy.max_video_mb'); ?>" 
                                    accept="video/mp4,video/webm,video/ogg,video/quicktime,.m4v">
                             <div class="form-text">Max size: <?php echo (int) config('academy.max_video_mb'); ?>MB. Leave empty to keep current video.</div>
                             <div id="current_uploaded_video" class="mt-2 small text-muted"></div>
@@ -305,7 +302,7 @@
             
             // Initialize Sortable for drag & drop reordering
             const lessonList = document.getElementById('lessonList');
-            if (lessonList) {
+            if (lessonList && window.Sortable) {
                 new Sortable(lessonList, {
                     animation: 150,
                     handle: '.drag-handle',

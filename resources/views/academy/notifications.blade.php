@@ -49,7 +49,7 @@
                                     </div>
                                     <p class="mb-2"><?php echo htmlspecialchars($notification['message']); ?></p>
                                     <?php if ($notification['link']): ?>
-                                        <a href="<?php echo $notification['link']; ?>" class="btn btn-sm btn-outline-primary">
+                                        <a href="<?php echo htmlspecialchars(ka_link($notification['link'])); ?>" class="btn btn-sm btn-outline-primary">
                                             View Details <i class="bi bi-arrow-right"></i>
                                         </a>
                                     <?php endif; ?>

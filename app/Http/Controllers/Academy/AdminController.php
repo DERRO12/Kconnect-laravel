@@ -393,6 +393,99 @@ class AdminController extends Controller
     }
 
     /** academy/admin/add_lesson (was admin/add_lesson.php) */
+    /**
+     * academy/admin/upload-video-chunk (new): receives a lesson video in pieces so long and heavy videos
+     * upload whatever the server's upload limit is. The browser sends each piece as the raw request body with
+     * X-Upload-Id, X-Upload-Offset, X-Upload-Total and X-Upload-Name; after the last piece the video is moved
+     * to assets/uploads/videos and its file name is returned for the lesson form (uploaded_video).
+     */
+    public function uploadVideoChunk(Request $request)
+    {
+        Academy::requireAdmin();
+
+        $id = (string) $request->header('X-Upload-Id');
+        $offset = (int) $request->header('X-Upload-Offset');
+        $total = (int) $request->header('X-Upload-Total');
+        $name = rawurldecode((string) $request->header('X-Upload-Name'));
+        $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+        $max = config('academy.max_video_mb') * 1048576;
+
+        if (!preg_match('/^[A-Za-z0-9]{16,64}$/', $id) || $offset < 0 || $total <= 0) {
+            return response()->json(['error' => 'Invalid upload'], 422);
+        }
+        if (!in_array($ext, self::VIDEO_TYPES, true)) {
+            return response()->json(['error' => 'File type not allowed. Allowed types: ' . implode(', ', self::VIDEO_TYPES)], 422);
+        }
+        if ($total > $max) {
+            return response()->json(['error' => 'File size exceeds limit of ' . ka_format_file_size($max)], 422);
+        }
+
+        $dir = storage_path('app/academy-chunks');
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0775, true);
+        }
+        $part = $dir . '/' . $id . '.part';
+        if ($offset === 0) {
+            // Pieces of uploads left unfinished for a day are cleared
+            foreach (glob($dir . '/*.part') ?: [] as $old) {
+                if (filemtime($old) < time() - 86400) {
+                    @unlink($old);
+                }
+            }
+            @unlink($part);
+        }
+        clearstatcache(true, $part);
+        $have = is_file($part) ? filesize($part) : 0;
+        if ($have !== $offset) {
+            // Out of step (a piece was resent or lost): tell the browser where to carry on
+            return response()->json(['error' => 'Upload out of step', 'offset' => $have], 409);
+        }
+
+        $in = fopen('php://input', 'rb');
+        $out = fopen($part, 'ab');
+        if (!$in || !$out) {
+            return response()->json(['error' => 'Could not save the upload'], 500);
+        }
+        $written = stream_copy_to_stream($in, $out);
+        fclose($in);
+        fclose($out);
+        $have += (int) $written;
+
+        if ($have > $total) {
+            @unlink($part);
+            return response()->json(['error' => 'Upload larger than announced'], 422);
+        }
+        if ($have < $total) {
+            return response()->json(['offset' => $have]);
+        }
+
+        $filename = uniqid() . '_' . time() . '.' . $ext;
+        $videos = ka_upload_path() . 'videos/';
+        if (!is_dir($videos)) {
+            @mkdir($videos, 0775, true);
+        }
+        if (!@rename($part, $videos . $filename)) {
+            @unlink($part);
+            return response()->json(['error' => 'Failed to move uploaded file'], 500);
+        }
+        @chmod($videos . $filename, 0644);
+
+        return response()->json(['offset' => $have, 'done' => true, 'filename' => $filename]);
+    }
+
+    private const VIDEO_TYPES = ['mp4', 'webm', 'ogg', 'm4v', 'mov'];
+
+    /** A video already sent through upload-video-chunk, named in the lesson form; null when none or invalid. */
+    private static function uploadedVideo(?string $filename): ?string
+    {
+        $filename = basename((string) $filename);
+        if (!preg_match('/^[a-f0-9]{13,}_\d+\.(' . implode('|', self::VIDEO_TYPES) . ')$/', $filename)) {
+            return null;
+        }
+
+        return is_file(ka_upload_path() . 'videos/' . $filename) ? $filename : null;
+    }
+
     public function addLesson(Request $request)
     {
         extract(Academy::pageVars(true, 'add_lesson'));
@@ -432,7 +525,9 @@ class AdminController extends Controller
 
         // Handle video upload if type is upload
         $video_filename = '';
-        if ($video_type === 'upload' && isset($_FILES['video_file']) && $_FILES['video_file']['error'] === UPLOAD_ERR_OK) {
+        if ($video_type === 'upload' && ($chunked = self::uploadedVideo($_POST['uploaded_video'] ?? null))) {
+            $video_filename = $chunked;
+        } elseif ($video_type === 'upload' && isset($_FILES['video_file']) && $_FILES['video_file']['error'] === UPLOAD_ERR_OK) {
             $upload_result = ka_upload_file(
                 $_FILES['video_file'],
                 ka_upload_path() . 'videos/',
@@ -538,7 +633,17 @@ class AdminController extends Controller
         }
 
         $files = $_FILES['video_files'] ?? null;
-        if (!$files || !is_array($files['name']) || count(array_filter($files['name'])) === 0) {
+        // Videos already sent in pieces (upload-video-chunk): their saved names and the original file names
+        $chunked = [];
+        foreach ((array)($_POST['uploaded_videos'] ?? []) as $i => $saved) {
+            $saved = self::uploadedVideo($saved);
+            if ($saved) {
+                $chunked[] = ['name' => (string)($_POST['uploaded_names'][$i] ?? $saved), 'saved' => $saved];
+            }
+        }
+        if ($chunked) {
+            $files = ['name' => array_column($chunked, 'name'), 'saved' => array_column($chunked, 'saved')];
+        } elseif (!$files || !is_array($files['name']) || count(array_filter($files['name'])) === 0) {
             return ka_redirect('/admin/manage_lessons.php?course_id=' . $course_id, 'Choose one or more video files to upload', 'danger');
         }
 
@@ -557,19 +662,24 @@ class AdminController extends Controller
         $added = 0;
         $failed = [];
         foreach ($order as $i) {
-            $file = [
-                'name' => $files['name'][$i],
-                'type' => $files['type'][$i],
-                'tmp_name' => $files['tmp_name'][$i],
-                'error' => $files['error'][$i],
-                'size' => $files['size'][$i],
-            ];
-            $upload_result = ka_upload_file(
-                $file,
-                ka_upload_path() . 'videos/',
-                ['mp4', 'webm', 'ogg', 'm4v', 'mov'],
-                config('academy.max_video_mb') * 1048576
-            );
+            if (isset($files['saved'])) {
+                $file = ['name' => $files['name'][$i]];
+                $upload_result = ['success' => true, 'filename' => $files['saved'][$i]];
+            } else {
+                $file = [
+                    'name' => $files['name'][$i],
+                    'type' => $files['type'][$i],
+                    'tmp_name' => $files['tmp_name'][$i],
+                    'error' => $files['error'][$i],
+                    'size' => $files['size'][$i],
+                ];
+                $upload_result = ka_upload_file(
+                    $file,
+                    ka_upload_path() . 'videos/',
+                    self::VIDEO_TYPES,
+                    config('academy.max_video_mb') * 1048576
+                );
+            }
             if (!$upload_result['success']) {
                 $failed[] = $file['name'] . ' (' . implode(', ', $upload_result['errors']) . ')';
                 continue;
@@ -637,8 +747,17 @@ class AdminController extends Controller
         // Handle video
         $video_final_url = $lesson['video_url']; // Keep existing by default
 
+        $chunked = $video_type === 'upload' ? self::uploadedVideo($_POST['uploaded_video'] ?? null) : null;
         if ($video_type === 'youtube') {
             $video_final_url = $video_url;
+        } elseif ($chunked) {
+            if ($lesson['video_type'] === 'upload' && $lesson['video_url'] && $lesson['video_url'] !== $chunked) {
+                $old_video_path = ka_upload_path() . 'videos/' . basename($lesson['video_url']);
+                if (file_exists($old_video_path)) {
+                    unlink($old_video_path);
+                }
+            }
+            $video_final_url = $chunked;
         } elseif ($video_type === 'upload' && isset($_FILES['video_file']) && $_FILES['video_file']['error'] === UPLOAD_ERR_OK) {
             // Delete old video if it exists
             if ($lesson['video_type'] === 'upload' && $lesson['video_url']) {

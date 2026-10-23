@@ -54,6 +54,7 @@ Route::any('/academy/admin/manage_lessons', [AdminController::class, 'manageLess
 Route::any('/academy/admin/add_lesson', [AdminController::class, 'addLesson']);
 Route::any('/academy/admin/edit_lesson', [AdminController::class, 'editLesson']);
 Route::post('/academy/admin/bulk_add_lessons', [AdminController::class, 'bulkAddLessons']);
+Route::post('/academy/admin/upload-video-chunk', [AdminController::class, 'uploadVideoChunk']);
 Route::any('/academy/admin/get_lesson', [AdminController::class, 'getLesson']);
 Route::any('/academy/admin/reorder_lessons', [AdminController::class, 'reorderLessons']);
 Route::any('/academy/admin/manage_quizzes', [AdminController::class, 'manageQuizzes']);

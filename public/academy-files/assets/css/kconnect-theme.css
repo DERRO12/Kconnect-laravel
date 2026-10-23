@@ -305,19 +305,81 @@ body.ka-page {
 .ka-page .text-primary { color: #009ada !important; }
 .ka-page .progress-bar { background: linear-gradient(135deg, #009ada 0%, #76bc21 100%); }
 
-/* Learner pages: K-Connect top menu (fixed) + K-Academy side menu */
-body.ka-learner { padding-top: 80px; }
+/* Learner pages: K-Connect top menu (fixed) + K-Academy bar under it */
+body.ka-learner { padding-top: 76px; }
 .ka-learner .kc-topnav .navbar { z-index: 1040; }
-.ka-learner .sidebar .nav { list-style: none; padding-left: 0; }
-.ka-learner .sidebar .nav-link { display: flex; align-items: center; text-align: left; padding: 0.6rem 1rem; white-space: nowrap; }
-.ka-learner .sidebar .nav-link span { flex: 1; }
-.ka-learner .sidebar .nav-link i { margin-right: 0.6rem; font-size: 1.1rem; }
-.ka-learner .sidebar .user-info { margin-bottom: 1rem !important; }
-@media (min-width: 768px) {
-    .ka-learner .sidebar { position: sticky; top: 80px; height: calc(100vh - 80px); align-self: flex-start; }
+.ka-learner > .container-fluid { max-width: 1400px; margin: 0 auto; }
+.ka-learner > .container-fluid > .row > main,
+.ka-learner main.col-md-9 {
+    flex: 0 0 100%; max-width: 100%; width: 100%; margin-left: 0 !important;
+    padding-left: 12px; padding-right: 12px;
+}
+.ka-subnav {
+    flex: 0 0 100%; max-width: 100%; position: sticky; top: 76px; z-index: 1020;
+    padding: 12px 12px 0; margin-bottom: 4px;
+}
+.ka-subnav-inner {
+    display: flex; align-items: center; gap: 16px;
+    background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(12px);
+    border: 1px solid #e2e8f0; border-radius: 16px; padding: 8px 10px 8px 16px;
+    box-shadow: 0 6px 18px -8px rgba(15, 23, 42, 0.12);
+}
+.ka-subnav-brand {
+    display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+    font-weight: 800; color: #0f172a; text-decoration: none; font-size: 1.05rem;
+    padding-right: 16px; border-right: 1px solid #e2e8f0;
+}
+.ka-subnav-brand:hover { color: #0f172a; }
+.ka-subnav-logo {
+    width: 34px; height: 34px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #009ada 0%, #76bc21 100%); color: #fff; font-size: 1.05rem;
+}
+.ka-subnav-links {
+    display: flex; align-items: center; gap: 4px; flex: 1; min-width: 0;
+    overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;
+}
+.ka-subnav-links::-webkit-scrollbar { display: none; }
+.ka-subnav-link {
+    display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
+    padding: 8px 12px; border-radius: 10px; color: #475569; font-weight: 600; font-size: 0.9rem;
+    text-decoration: none; transition: background 0.2s ease, color 0.2s ease;
+}
+.ka-subnav-link i { font-size: 1rem; }
+.ka-subnav-link:hover { background: #f1f5f9; color: #0082b3; }
+.ka-subnav-link.active {
+    background: linear-gradient(135deg, rgba(0, 154, 218, 0.12) 0%, rgba(118, 188, 33, 0.12) 100%);
+    color: #0082b3;
+}
+.ka-count {
+    min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; font-size: 0.72rem; font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center; background: #ef4444; color: #fff;
+}
+.ka-count-green { background: #76bc21; }
+.ka-subnav-end { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.ka-subnav-admin, .ka-subnav-user {
+    display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 10px;
+    color: #475569; font-weight: 600; font-size: 0.88rem; text-decoration: none;
+}
+.ka-subnav-admin:hover, .ka-subnav-user:hover, .ka-subnav-user.active { background: #f1f5f9; color: #0082b3; }
+.ka-avatar {
+    width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #009ada 0%, #76bc21 100%); color: #fff; font-weight: 700; font-size: 0.85rem;
+}
+.ka-subnav-user-name { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 1439.98px) {
+    .ka-subnav-user-name, .ka-subnav-admin span { display: none; }
 }
 @media (max-width: 991.98px) {
-    .ka-learner .sidebar { top: 0; z-index: 1060; }
+    body.ka-learner { padding-top: 70px; }
+    .ka-subnav { top: 70px; padding: 8px 8px 0; }
+    .ka-subnav-brand span:last-child { display: none; }
+    .ka-subnav-brand { padding-right: 10px; }
+    .ka-subnav-inner { gap: 10px; padding: 6px 8px; }
+}
+@media (max-width: 575.98px) {
+    .ka-subnav-link span:not(.ka-count) { display: none; }
+    .ka-subnav-link { padding: 8px 10px; }
+    .ka-subnav-link i { font-size: 1.15rem; }
 }
 
 /* Admin pages: K-Connect admin sidebar + K-Academy page in the main area */
@@ -345,8 +407,21 @@ body.ka-admin { padding-top: 0; }
 .ka-admin .table { font-size: 0.88rem; }
 .ka-admin .table td, .ka-admin .table th { vertical-align: middle; }
 
-.ka-learner .sidebar .sidebar-header { margin-bottom: 0.75rem !important; }
-.ka-learner .sidebar .avatar-circle { background: linear-gradient(135deg, #009ada 0%, #76bc21 100%); }
 .ka-admin .stat-card-admin p { font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ka-admin main > nav .container-fluid > div:last-child { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: flex-end; }
 .ka-admin main > nav .container-fluid > div:last-child .me-2 { margin-right: 0 !important; }
+
+/* Featured (hero) video on the learner dashboard */
+.ka-hero{border-radius:14px;overflow:hidden;background:#fff}
+.ka-hero-frame{position:relative;width:100%;padding-top:56.25%;background:#0b1620;height:100%}
+.ka-hero-frame iframe,.ka-hero-frame video{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000}
+.ka-hero-body{display:flex;flex-direction:column;justify-content:center;height:100%;padding:24px 28px}
+.ka-hero-body h4{font-weight:700;color:#1d2b36;margin:10px 0 8px}
+.ka-hero-tag{display:inline-flex;align-items:center;gap:6px;align-self:flex-start;font-size:.78rem;font-weight:600;
+  color:#009ada;background:rgba(0,154,218,.1);padding:4px 10px;border-radius:999px}
+@media (max-width:991.98px){.ka-hero-frame{height:auto}.ka-hero-body{padding:18px 20px}}
+
+/* Admin page title bars: compact action buttons on one line beside the title */
+.ka-admin main > nav .container-fluid { flex-wrap: wrap; gap: .75rem; }
+.ka-admin main > nav .container-fluid > div:first-child { flex: 1 1 280px; min-width: 0; }
+.ka-admin main > nav .btn { padding: .42rem .9rem; font-size: .875rem; margin: 0 !important; white-space: nowrap; border-radius: 8px; }

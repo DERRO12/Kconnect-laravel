@@ -15,7 +15,7 @@ return [
         'signatory_title' => env('KA_CERT_SIGNATORY_TITLE', 'Learning & Development'),
     ],
 
-    // Largest lesson video an admin can upload, in MB (the server's upload_max_filesize and
-    // post_max_size must allow it too)
-    'max_video_mb' => (int) env('KA_MAX_VIDEO_MB', 500),
+    // Largest lesson video an admin can upload, in MB. Videos are sent in small pieces
+    // (upload-video-chunk), so the server's upload_max_filesize does not limit this.
+    'max_video_mb' => (int) env('KA_MAX_VIDEO_MB', 2048),
 ];
