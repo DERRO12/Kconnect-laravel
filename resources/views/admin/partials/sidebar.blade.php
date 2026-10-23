@@ -115,6 +115,22 @@ $current_page = basename(kc_self());
                     <li><a href="admin-sync-users" class="{{ $current_page == 'admin-sync-users' ? 'active' : '' }}"><i class="fas fa-sync-alt"></i> K-Academy Sync</a></li>
                 </ul>
             </li>
+
+            <li class="menu-item dropdown">
+                <a href="#" class="dropdown-toggle">
+                    <i class="fas fa-graduation-cap"></i>
+                    <span>K-Academy</span>
+                    <i class="fas fa-chevron-down dropdown-arrow"></i>
+                </a>
+                <ul class="submenu">
+                    <li><a href="{{ url('academy/admin/dashboard') }}"><i class="fas fa-tachometer-alt"></i> Academy Dashboard</a></li>
+                    <li><a href="{{ url('academy/admin/manage_courses') }}"><i class="fas fa-book"></i> Courses &amp; Lessons</a></li>
+                    <li><a href="{{ url('academy/admin/manage_quizzes') }}"><i class="fas fa-question-circle"></i> Quizzes</a></li>
+                    <li><a href="{{ url('academy/admin/pending-certificates') }}"><i class="fas fa-certificate"></i> Certificates</a></li>
+                    <li><a href="{{ url('academy/admin/manage_users') }}"><i class="fas fa-user-graduate"></i> Learners</a></li>
+                    <li><a href="{{ url('academy/admin/reports') }}"><i class="fas fa-chart-bar"></i> Reports</a></li>
+                </ul>
+            </li>
             
             <li class="menu-item dropdown">
                 <a href="#" class="dropdown-toggle">

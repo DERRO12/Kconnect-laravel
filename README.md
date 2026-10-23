@@ -89,9 +89,33 @@ After editing `.env` on the live server, run `php artisan config:cache` again.
 - `resources/views/` the HTML of each page (Blade)
 - `app/Support/legacy.php` the old `config.php` helper functions (`isLoggedIn`, `sanitize`, `getNewsPosts`...)
 - `app/Support/kacademy.php`, `projects.php`, `it_mailer.php` the other old shared files
+- `app/Support/Academy.php`, `academy_helpers.php`, `app/Http/Controllers/Academy/`, `resources/views/academy/`, `routes/kconnect/academy.php` the K-Academy module
 - `app/Models/` one model per table, mapped to the existing table names
 - `database/migrations/` a single migration with the exact current table definitions. It only creates
   tables that do not exist yet (for a brand new empty database) and never changes existing ones.
+
+## K-Academy (learning module)
+
+K-Academy (courses, lessons, quizzes, certificates) now runs inside K-Connect on the same login.
+It still uses its own database, `kiboko_academy` (the `KA_DB_*` settings), with no table changes.
+
+- Employees open it from the user menu, **My Learning (K-Academy)**, or at `/academy`.
+  Admins manage it from the K-Connect admin sidebar, **K-Academy**, or at `/academy/admin`.
+- The first time an employee opens K-Academy, they are linked to their K-Academy account
+  by employee code (then by e-mail), or a new one is made. A learner set to inactive in
+  K-Academy admin gets "access denied".
+- Lesson videos can be a YouTube, Vimeo or Google Drive link, a direct video address, or an uploaded file.
+  **Upload Videos** on a course's lessons page uploads several videos at once and makes one lesson per video.
+- Passing a course's quiz requests a certificate. An admin approves it under Certificates, and then
+  the learner can download the PDF. Anyone can check a certificate at `/academy/verify-certificate`.
+- Uploaded files are stored in `public/academy-files/assets/uploads/` (`courses`, `videos`,
+  `attachments`, `profiles`). They are not in git. To copy them from the old K-Academy site, run
+  `php artisan kconnect:import-academy-files <old K-Academy folder>`. This only copies.
+- The `KA_CERT_*` settings are the names printed on certificates. `KA_MAX_VIDEO_MB` is the largest video upload (default 500).
+  PHP must allow uploads that big. `public/.user.ini` (cPanel) and `public/.htaccess` (XAMPP) set the limit to 512M.
+  On XAMPP, if uploads are still refused, raise `upload_max_filesize` and `post_max_size` in `php.ini`.
+- The old K-Academy addresses (`login.php`, `course-player.php?id=...`, `admin/manage_courses.php`...)
+  still work under `/academy/`.
 
 ## Never do this on the live database
 
