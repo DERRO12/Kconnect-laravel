@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->web(append: [
             \App\Http\Middleware\InjectCsrfToken::class,
+            \App\Http\Middleware\ClearContentCache::class,
         ]);
         // The hosting proxy (cPanel / Cloudflare) passes the visitor's IP like before
         $middleware->trustProxies(at: '*');
