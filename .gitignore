@@ -22,3 +22,11 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+.env.*
+!.env.example
+production.env
+
+# K-Academy uploaded files (videos, thumbnails, attachments, profile photos) live on the server only
+/public/academy-files/assets/uploads/**
+!/public/academy-files/assets/uploads/*/
+!/public/academy-files/assets/uploads/*/.gitkeep
