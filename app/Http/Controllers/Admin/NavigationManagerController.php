@@ -17,6 +17,17 @@ class NavigationManagerController extends Controller
     /** admin/manage-navigation */
     public function index(Request $request)
     {
+        try {
+            return $this->manage($request);
+        } finally {
+            // The site menu is cached (getNavigationLinks); drop it so changes show on the site at once,
+            // including when a change ends in an error page.
+            clearCache('navigation_links');
+        }
+    }
+
+    private function manage(Request $request)
+    {
         if (! isAdminLoggedIn()) {
             kc_redirect('login');
         }

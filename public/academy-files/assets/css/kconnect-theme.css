@@ -1,0 +1,470 @@
+/* K-Connect top menu styles, copied from public/style.css and limited to .kc-topnav (K-Academy pages). */
+.kc-topnav {
+    
+    --kiboko-green: #6aa61d;     
+    --kiboko-blue: #0082b3;      
+    --kiboko-dark: #0f172a;
+    --kiboko-light: #f8fafc;
+    --kiboko-border: #e2e8f0;
+    --kiboko-gray: #475569;
+    --kiboko-gray-light: #94a3b8;
+    
+    
+    --grad-primary: linear-gradient(135deg, var(--kiboko-blue) 0%, var(--kiboko-green) 100%);
+    --grad-light: linear-gradient(135deg, rgba(0, 130, 179, 0.08) 0%, rgba(106, 166, 29, 0.08) 100%);
+    
+    
+    --shadow-sm: 0 2px 4px rgba(0,0,0,0.02);
+    --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05);
+    --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.05);
+    --shadow-2xl: 0 25px 50px -12px rgba(0,0,0,0.15);
+    
+    
+    --radius-sm: 12px;
+    --radius-md: 16px;
+    --radius-lg: 20px;
+    --radius-xl: 24px;
+    --radius-2xl: 32px;
+    
+    
+    --transition-fast: 0.2s ease;
+    --transition-base: 0.3s ease;
+    
+    
+    --base-font-size: 15px;
+}
+.kc-topnav .navbar {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 15px 0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    position: fixed;
+    top: 0;
+    
+    width: 100%;
+    z-index: 700;
+}
+.kc-topnav .navbar-brand img {
+    height: 30px;
+    width: 200px;
+    margin-right: 10px;
+}
+.kc-topnav .nav-link {
+    font-weight: 600;
+    color: #475569 !important;
+    margin: 0 8px;
+    padding: 8px 16px !important;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-base);
+    font-size: 0.95rem;
+}
+.kc-topnav .nav-link:hover, .kc-topnav .nav-link.active {
+    background: var(--grad-light);
+    color: var(--kiboko-blue) !important;
+    transform: translateY(-2px);
+}
+.kc-topnav .dropdown {
+    position: relative;
+}
+.kc-topnav .dropdown-menu {
+    border: none;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-xl);
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(10px);
+    padding: 8px;
+    min-width: 240px;
+    border: 1px solid rgba(0,0,0,0.05);
+    animation: kc-dropdownFade 0.2s ease;
+    z-index: 1050;
+}
+@media (min-width: 992px) {
+.kc-topnav .dropdown:hover > .dropdown-menu {
+        display: block;
+    }
+
+
+}
+.kc-topnav .dropdown-submenu {
+    position: relative;
+}
+.kc-topnav .dropdown-submenu .dropdown-menu {
+    top: 0;
+    left: 100%;
+    margin-top: -8px;
+    margin-left: 2px;
+    display: none;
+}
+.kc-topnav .dropdown-submenu:hover > .dropdown-menu {
+    display: block;
+}
+.kc-topnav .dropdown-submenu > .dropdown-toggle::after {
+    display: inline-block;
+    margin-left: 0.5em;
+    vertical-align: middle;
+    content: "";
+    border-top: 0.3em solid transparent;
+    border-right: 0;
+    border-bottom: 0.3em solid transparent;
+    border-left: 0.3em solid;
+    float: right;
+    margin-top: 8px;
+}
+.kc-topnav .dropdown-item {
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-weight: 500;
+    color: #334155;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+.kc-topnav .dropdown-item:hover {
+    background: var(--grad-light);
+    color: var(--kiboko-blue);
+    transform: translateX(4px);
+}
+.kc-topnav .dropdown-header {
+    color: var(--kiboko-blue);
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 8px 16px;
+    background: rgba(0, 154, 218, 0.05);
+    margin: 5px 0;
+    border-radius: 6px;
+    cursor: default;
+}
+@keyframes kc-dropdownFade{
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+@media (min-width: 992px) {
+.kc-topnav .navbar-nav {
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: center;
+    }
+.kc-topnav .nav-link {
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+.kc-topnav .dropdown-toggle {
+        white-space: nowrap;
+    }
+.kc-topnav .navbar-collapse {
+        position: relative;
+    }
+.kc-topnav .btn-login {
+        white-space: nowrap;
+        flex-shrink: 0;
+        margin-left: 0.5rem;
+    }
+
+
+}
+@media (min-width: 992px) and (max-width: 1199.98px) {
+.kc-topnav .nav-link {
+        padding: 8px 12px !important;
+        font-size: 0.9rem;
+    }
+.kc-topnav .btn-login {
+        padding: 8px 18px !important;
+        font-size: 0.85rem;
+    }
+
+
+}
+@media (min-width: 1400px) {
+.kc-topnav .nav-link {
+        padding: 8px 18px !important;
+        font-size: 0.95rem;
+    }
+
+
+}
+@media (max-width: 991.98px) {
+.kc-topnav .dropdown-menu {
+        position: static !important;
+        float: none;
+        width: 100%;
+        margin-top: 0;
+        background-color: rgba(255, 255, 255, 0.98);
+        border: 1px solid rgba(0,0,0,0.05);
+        box-shadow: none;
+        padding-left: 1.5rem;
+        display: none;
+    }
+.kc-topnav .dropdown-menu.show {
+        display: block;
+    }
+.kc-topnav .dropdown-submenu .dropdown-menu {
+        position: static !important;
+        left: 0;
+        margin-left: 1.5rem;
+        width: calc(100% - 1.5rem);
+        padding-left: 1rem;
+    }
+.kc-topnav .dropdown-submenu > .dropdown-toggle::after {
+        display: none;
+    }
+.kc-topnav .dropdown-item {
+        padding: 12px 16px;
+        font-size: 0.95rem;
+    }
+.kc-topnav .nav-link {
+        padding: 12px 16px !important;
+        margin: 0;
+    }
+.kc-topnav .navbar-nav {
+        padding: 0.5rem 0;
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+.kc-topnav .btn-login {
+        margin: 0.5rem 1rem;
+        display: block;
+        text-align: center;
+    }
+
+
+}
+@media (max-width: 575.98px) {
+.kc-topnav .dropdown-menu {
+        padding-left: 1rem;
+    }
+.kc-topnav .dropdown-submenu .dropdown-menu {
+        margin-left: 1rem;
+        padding-left: 0.75rem;
+    }
+.kc-topnav .dropdown-item {
+        padding: 10px 12px;
+        font-size: 0.9rem;
+    }
+.kc-topnav .navbar-brand img {
+        width: 160px;
+        height: auto;
+    }
+
+
+}
+@media (hover: none) and (pointer: coarse) {
+.kc-topnav .dropdown > .dropdown-toggle {
+        cursor: pointer;
+    }
+.kc-topnav .dropdown-submenu > .dropdown-toggle {
+        cursor: pointer;
+    }
+.kc-topnav .dropdown:hover > .dropdown-menu {
+        display: none;
+    }
+.kc-topnav .dropdown-submenu:hover > .dropdown-menu {
+        display: none;
+    }
+
+
+}
+
+/* ===== K-Academy pages in the K-Connect look ===== */
+:root {
+    --bs-primary: #009ada;
+    --bs-primary-rgb: 0, 154, 218;
+    --bs-link-color: #0082b3;
+    --bs-link-color-rgb: 0, 130, 179;
+    --bs-link-hover-color: #6aa61d;
+}
+body.ka-page {
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+    background: #f8fafc;
+}
+.ka-page .btn-primary {
+    --bs-btn-bg: #009ada; --bs-btn-border-color: #009ada;
+    --bs-btn-hover-bg: #0082b3; --bs-btn-hover-border-color: #0082b3;
+    --bs-btn-active-bg: #0082b3; --bs-btn-active-border-color: #0082b3;
+    --bs-btn-disabled-bg: #009ada; --bs-btn-disabled-border-color: #009ada;
+}
+.ka-page .btn-outline-primary {
+    --bs-btn-color: #009ada; --bs-btn-border-color: #009ada;
+    --bs-btn-hover-bg: #009ada; --bs-btn-hover-border-color: #009ada;
+    --bs-btn-active-bg: #0082b3; --bs-btn-active-border-color: #0082b3;
+}
+.ka-page .btn-success {
+    --bs-btn-bg: #76bc21; --bs-btn-border-color: #76bc21;
+    --bs-btn-hover-bg: #6aa61d; --bs-btn-hover-border-color: #6aa61d;
+}
+.ka-page .bg-primary { background-color: #009ada !important; }
+.ka-page .text-primary { color: #009ada !important; }
+.ka-page .progress-bar { background: linear-gradient(135deg, #009ada 0%, #76bc21 100%); }
+
+/* Learner pages: the K-Academy top bar (fixed). --ka-bar-h is its real height, set by the bar's script
+   (it becomes two rows on tablets); 68px until then. */
+body.ka-learner { padding-top: calc(var(--ka-bar-h, 68px) + 8px); background: #f6f8fb; }
+.ka-learner > .container-fluid { max-width: 1400px; margin: 0 auto; }
+.ka-learner > .container-fluid > .row > main,
+.ka-learner main.col-md-9 {
+    flex: 0 0 100%; max-width: 100%; width: 100%; margin-left: 0 !important;
+}
+.ka-topbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1030;
+    background: rgba(255, 255, 255, 0.92); backdrop-filter: saturate(180%) blur(14px); -webkit-backdrop-filter: saturate(180%) blur(14px);
+    border-bottom: 1px solid #e6ebf1; box-shadow: 0 6px 24px -16px rgba(15, 23, 42, 0.25);
+}
+.ka-topbar::before {
+    content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px;
+    background: linear-gradient(90deg, #009ada 0%, #76bc21 100%);
+}
+.ka-topbar-inner {
+    max-width: 1600px; margin: 0 auto; min-height: 68px; padding: 3px 24px 0;
+    display: flex; align-items: center; gap: 18px;
+}
+/* The old K-Academy logo: the gradient word mark */
+.ka-logo { display: flex; align-items: center; gap: 10px; flex-shrink: 0; text-decoration: none; }
+.ka-logo-mark {
+    width: 38px; height: 38px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #009ada 0%, #76bc21 100%); color: #fff; font-size: 1.15rem;
+    box-shadow: 0 6px 14px -6px rgba(0, 154, 218, 0.7);
+}
+.ka-logo-text {
+    font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1;
+    background: linear-gradient(135deg, #009ada 0%, #76bc21 100%); -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: #009ada;
+}
+.ka-subnav-links {
+    display: flex; align-items: center; justify-content: center; gap: 2px; flex: 1; min-width: 0;
+    overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; scroll-behavior: smooth;
+}
+.ka-subnav-links::-webkit-scrollbar { display: none; }
+.ka-subnav-links.ka-scrolls {
+    justify-content: flex-start;
+    -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 28px), transparent);
+            mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 28px), transparent);
+}
+.ka-subnav-link {
+    position: relative; display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; flex-shrink: 0;
+    padding: 9px 11px; border-radius: 10px; color: #526077; font-weight: 600; font-size: 0.88rem; line-height: 1.2;
+    text-decoration: none; transition: background 0.2s ease, color 0.2s ease;
+}
+.ka-subnav-icon { display: inline-flex; font-size: 1rem; }
+.ka-label-short { display: none; }
+.ka-subnav-link:hover { background: #f1f5f9; color: #0082b3; }
+.ka-subnav-link.active {
+    background: linear-gradient(135deg, rgba(0, 154, 218, 0.12) 0%, rgba(118, 188, 33, 0.12) 100%);
+    color: #0082b3;
+}
+.ka-count {
+    min-width: 19px; height: 19px; padding: 0 5px; border-radius: 10px; font-size: 0.7rem; font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center; background: #ef4444; color: #fff;
+}
+.ka-count-green { background: #76bc21; }
+.ka-subnav-end { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.ka-home-btn {
+    display: inline-flex; align-items: center; gap: 7px; padding: 7px 14px; border-radius: 999px;
+    border: 1px solid #dbe3ec; color: #334155; font-weight: 600; font-size: 0.86rem; text-decoration: none; white-space: nowrap;
+    transition: all 0.2s ease;
+}
+.ka-home-btn:hover { border-color: #009ada; color: #0082b3; background: rgba(0, 154, 218, 0.06); }
+.ka-subnav-user {
+    display: inline-flex; align-items: center; gap: 8px; padding: 4px 8px 4px 4px; border-radius: 999px;
+    border: 1px solid transparent; background: transparent;
+    color: #334155; font-weight: 600; font-size: 0.88rem; white-space: nowrap;
+}
+.ka-subnav-user:hover, .ka-subnav-user.active, .ka-subnav-user[aria-expanded="true"] { background: #f1f5f9; border-color: #e6ebf1; }
+.ka-caret { font-size: 0.7rem; color: #94a3b8; }
+.ka-avatar {
+    width: 34px; height: 34px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #009ada 0%, #76bc21 100%); color: #fff; font-weight: 700; font-size: 0.85rem;
+}
+.ka-subnav-user-name { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ka-user-menu { min-width: 240px; padding: 6px; border: 1px solid #e6ebf1; border-radius: 14px; box-shadow: 0 18px 40px -18px rgba(15, 23, 42, 0.35); }
+.ka-user-menu .ka-user-head { padding: 8px 12px 10px; display: flex; flex-direction: column; border-bottom: 1px solid #eef2f6; margin-bottom: 4px; }
+.ka-user-menu .ka-user-head small { color: #94a3b8; }
+.ka-user-menu .dropdown-item { border-radius: 9px; padding: 8px 12px; font-size: 0.9rem; display: flex; gap: 10px; align-items: center; }
+.ka-user-menu .dropdown-item:hover { background: #f1f5f9; }
+
+/* Up to large screens: no name beside the avatar */
+@media (max-width: 1599.98px) {
+    .ka-subnav-user-name { display: none; }
+}
+/* Laptops: the links move to a second row */
+@media (max-width: 1439.98px) {
+    .ka-topbar-inner { flex-wrap: wrap; row-gap: 0; padding-top: 3px; }
+    .ka-logo, .ka-subnav-end { min-height: 60px; }
+    .ka-subnav-end { margin-left: auto; }
+    .ka-subnav-links { order: 3; flex: 0 0 100%; gap: 6px; border-top: 1px solid #eef2f6; padding: 5px 0 6px; }
+}
+/* Tablets and small laptops: the second row shows tabs (icon over a short label) */
+@media (max-width: 1279.98px) {
+    .ka-subnav-links { justify-content: space-between; gap: 4px; padding: 6px 0 7px; }
+    .ka-subnav-link { flex-direction: column; gap: 3px; padding: 6px 10px; font-size: 0.74rem; flex: 1 0 auto; }
+    .ka-subnav-icon { font-size: 1.15rem; }
+    .ka-label { display: none; }
+    .ka-label-short { display: inline; }
+    .ka-subnav-link .ka-count { position: absolute; top: 2px; right: calc(50% - 22px); min-width: 16px; height: 16px; font-size: 0.62rem; }
+}
+@media (max-width: 767.98px) {
+    .ka-topbar-inner { padding-left: 12px; padding-right: 12px; }
+}
+/* Phones: icons only */
+@media (max-width: 575.98px) {
+    .ka-logo-text { font-size: 1.25rem; }
+    .ka-logo-mark { width: 34px; height: 34px; }
+    .ka-home-btn { padding: 7px 11px; }
+    .ka-home-btn span { display: none; }
+    .ka-label-short { display: none; }
+    .ka-subnav-links { gap: 0; }
+    .ka-subnav-link { padding: 9px 6px; }
+    .ka-subnav-link .ka-count { right: calc(50% - 18px); }
+}
+
+/* Admin pages: K-Connect admin sidebar + K-Academy page in the main area */
+body.ka-admin { padding-top: 0; }
+.ka-admin .admin-sidebar .dropdown-toggle::after { display: none; }
+.ka-admin .main-content { padding: 20px 24px; }
+.ka-admin .main-content > .container-fluid > .row > main,
+.ka-admin .main-content main {
+    flex: 0 0 100%; max-width: 100%; width: 100%; margin-left: 0 !important; padding-left: 12px; padding-right: 12px;
+}
+.ka-admin .ka-admin-top {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    background: #fff; border-radius: 16px; padding: 14px 20px; margin-bottom: 18px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;
+}
+.ka-admin .ka-admin-top .ka-crumb { font-weight: 700; color: #0f172a; }
+.ka-admin .ka-admin-top .ka-crumb i { color: #009ada; margin-right: 8px; }
+.ka-admin .ka-mobile-menu { display: none; }
+@media (max-width: 992px) { .ka-admin .ka-mobile-menu { display: inline-flex; } }
+
+/* Smaller buttons and tables (Plus Jakarta Sans is wider than the old Inter font) */
+.ka-page .btn-sm.btn-primary, .ka-page .btn-sm.btn-outline-primary, .ka-page .btn-sm.btn-outline-secondary {
+    padding: 0.3rem 0.75rem; font-size: 0.85rem; border-width: 1px;
+}
+.ka-admin .table { font-size: 0.88rem; }
+.ka-admin .table td, .ka-admin .table th { vertical-align: middle; }
+
+.ka-admin .stat-card-admin p { font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ka-admin main > nav .container-fluid > div:last-child { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: flex-end; }
+.ka-admin main > nav .container-fluid > div:last-child .me-2 { margin-right: 0 !important; }
+
+/* Featured (hero) video on the learner dashboard */
+.ka-hero{border-radius:14px;overflow:hidden;background:#fff}
+.ka-hero-frame{position:relative;width:100%;padding-top:56.25%;background:#0b1620;height:100%}
+.ka-hero-frame iframe,.ka-hero-frame video{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000}
+.ka-hero-body{display:flex;flex-direction:column;justify-content:center;height:100%;padding:24px 28px}
+.ka-hero-body h4{font-weight:700;color:#1d2b36;margin:10px 0 8px}
+.ka-hero-tag{display:inline-flex;align-items:center;gap:6px;align-self:flex-start;font-size:.78rem;font-weight:600;
+  color:#009ada;background:rgba(0,154,218,.1);padding:4px 10px;border-radius:999px}
+@media (max-width:991.98px){.ka-hero-frame{height:auto}.ka-hero-body{padding:18px 20px}}
+
+/* Admin page title bars: compact action buttons on one line beside the title */
+.ka-admin main > nav .container-fluid { flex-wrap: wrap; gap: .75rem; }
+.ka-admin main > nav .container-fluid > div:first-child { flex: 1 1 280px; min-width: 0; }
+.ka-admin main > nav .btn { padding: .42rem .9rem; font-size: .875rem; margin: 0 !important; white-space: nowrap; border-radius: 8px; }
