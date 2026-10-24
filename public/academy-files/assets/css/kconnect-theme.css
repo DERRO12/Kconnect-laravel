@@ -305,53 +305,57 @@ body.ka-page {
 .ka-page .text-primary { color: #009ada !important; }
 .ka-page .progress-bar { background: linear-gradient(135deg, #009ada 0%, #76bc21 100%); }
 
-/* Learner pages: K-Connect top menu (fixed) + K-Academy bar under it.
-   --kc-nav-h is the K-Connect menu's real height (set by the bar's script); 76px until then. */
-body.ka-learner { padding-top: var(--kc-nav-h, 76px); }
-.ka-learner .kc-topnav .navbar { z-index: 1040; }
+/* Learner pages: the K-Academy top bar (fixed). --ka-bar-h is its real height, set by the bar's script
+   (it becomes two rows on tablets); 68px until then. */
+body.ka-learner { padding-top: calc(var(--ka-bar-h, 68px) + 8px); background: #f6f8fb; }
 .ka-learner > .container-fluid { max-width: 1400px; margin: 0 auto; }
 .ka-learner > .container-fluid > .row > main,
 .ka-learner main.col-md-9 {
     flex: 0 0 100%; max-width: 100%; width: 100%; margin-left: 0 !important;
 }
-.ka-subnav {
-    flex: 0 0 100%; max-width: 100%; position: sticky; top: var(--kc-nav-h, 76px); z-index: 1020;
-    padding: 14px 24px 0; margin-bottom: 4px;
+.ka-topbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1030;
+    background: rgba(255, 255, 255, 0.92); backdrop-filter: saturate(180%) blur(14px); -webkit-backdrop-filter: saturate(180%) blur(14px);
+    border-bottom: 1px solid #e6ebf1; box-shadow: 0 6px 24px -16px rgba(15, 23, 42, 0.25);
 }
-.ka-subnav-inner {
-    display: flex; align-items: center; gap: 14px; min-height: 60px;
-    background: rgba(255, 255, 255, 0.97); backdrop-filter: saturate(180%) blur(12px);
-    border: 1px solid #e6ebf1; border-radius: 16px; padding: 8px 10px 8px 14px;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px -12px rgba(15, 23, 42, 0.18);
+.ka-topbar::before {
+    content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px;
+    background: linear-gradient(90deg, #009ada 0%, #76bc21 100%);
 }
-.ka-subnav-brand {
-    display: flex; align-items: center; gap: 10px; flex-shrink: 0;
-    font-weight: 800; color: #0f172a; text-decoration: none; font-size: 1.05rem; letter-spacing: -0.01em;
-    padding-right: 14px; border-right: 1px solid #e6ebf1;
+.ka-topbar-inner {
+    max-width: 1600px; margin: 0 auto; min-height: 68px; padding: 3px 24px 0;
+    display: flex; align-items: center; gap: 18px;
 }
-.ka-subnav-brand:hover { color: #0f172a; }
-.ka-subnav-logo {
-    width: 36px; height: 36px; border-radius: 11px; display: inline-flex; align-items: center; justify-content: center;
-    background: linear-gradient(135deg, #009ada 0%, #76bc21 100%); color: #fff; font-size: 1.1rem;
-    box-shadow: 0 4px 10px -4px rgba(0, 154, 218, 0.6);
+/* The old K-Academy logo: the gradient word mark */
+.ka-logo { display: flex; align-items: center; gap: 10px; flex-shrink: 0; text-decoration: none; }
+.ka-logo-mark {
+    width: 38px; height: 38px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #009ada 0%, #76bc21 100%); color: #fff; font-size: 1.15rem;
+    box-shadow: 0 6px 14px -6px rgba(0, 154, 218, 0.7);
+}
+.ka-logo-text {
+    font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1;
+    background: linear-gradient(135deg, #009ada 0%, #76bc21 100%); -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: #009ada;
 }
 .ka-subnav-links {
-    display: flex; align-items: center; gap: 2px; flex: 1; min-width: 0;
+    display: flex; align-items: center; justify-content: center; gap: 2px; flex: 1; min-width: 0;
     overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; scroll-behavior: smooth;
 }
 .ka-subnav-links::-webkit-scrollbar { display: none; }
 .ka-subnav-links.ka-scrolls {
+    justify-content: flex-start;
     -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 28px), transparent);
             mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 28px), transparent);
 }
 .ka-subnav-link {
     position: relative; display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; flex-shrink: 0;
-    padding: 9px 11px; border-radius: 10px; color: #526077; font-weight: 600; font-size: 0.9rem; line-height: 1.2;
+    padding: 9px 11px; border-radius: 10px; color: #526077; font-weight: 600; font-size: 0.88rem; line-height: 1.2;
     text-decoration: none; transition: background 0.2s ease, color 0.2s ease;
 }
 .ka-subnav-icon { display: inline-flex; font-size: 1rem; }
 .ka-label-short { display: none; }
-.ka-subnav-link:hover { background: #f3f6f9; color: #0082b3; }
+.ka-subnav-link:hover { background: #f1f5f9; color: #0082b3; }
 .ka-subnav-link.active {
     background: linear-gradient(135deg, rgba(0, 154, 218, 0.12) 0%, rgba(118, 188, 33, 0.12) 100%);
     color: #0082b3;
@@ -361,55 +365,64 @@ body.ka-learner { padding-top: var(--kc-nav-h, 76px); }
     display: inline-flex; align-items: center; justify-content: center; background: #ef4444; color: #fff;
 }
 .ka-count-green { background: #76bc21; }
-.ka-subnav-end {
-    display: flex; align-items: center; gap: 6px; flex-shrink: 0; padding-left: 12px; border-left: 1px solid #e6ebf1;
+.ka-subnav-end { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.ka-home-btn {
+    display: inline-flex; align-items: center; gap: 7px; padding: 7px 14px; border-radius: 999px;
+    border: 1px solid #dbe3ec; color: #334155; font-weight: 600; font-size: 0.86rem; text-decoration: none; white-space: nowrap;
+    transition: all 0.2s ease;
 }
-.ka-subnav-admin, .ka-subnav-user {
-    display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 10px;
-    color: #526077; font-weight: 600; font-size: 0.88rem; text-decoration: none; white-space: nowrap;
+.ka-home-btn:hover { border-color: #009ada; color: #0082b3; background: rgba(0, 154, 218, 0.06); }
+.ka-subnav-user {
+    display: inline-flex; align-items: center; gap: 8px; padding: 4px 8px 4px 4px; border-radius: 999px;
+    border: 1px solid transparent; background: transparent;
+    color: #334155; font-weight: 600; font-size: 0.88rem; white-space: nowrap;
 }
-.ka-subnav-admin { border: 1px solid #e6ebf1; }
-.ka-subnav-admin:hover, .ka-subnav-user:hover, .ka-subnav-user.active { background: #f3f6f9; color: #0082b3; }
+.ka-subnav-user:hover, .ka-subnav-user.active, .ka-subnav-user[aria-expanded="true"] { background: #f1f5f9; border-color: #e6ebf1; }
+.ka-caret { font-size: 0.7rem; color: #94a3b8; }
 .ka-avatar {
-    width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+    width: 34px; height: 34px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
     background: linear-gradient(135deg, #009ada 0%, #76bc21 100%); color: #fff; font-weight: 700; font-size: 0.85rem;
 }
 .ka-subnav-user-name { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-/* Admins get the Manage button there instead of their name */
-.ka-has-admin .ka-subnav-user-name { display: none; }
+.ka-user-menu { min-width: 240px; padding: 6px; border: 1px solid #e6ebf1; border-radius: 14px; box-shadow: 0 18px 40px -18px rgba(15, 23, 42, 0.35); }
+.ka-user-menu .ka-user-head { padding: 8px 12px 10px; display: flex; flex-direction: column; border-bottom: 1px solid #eef2f6; margin-bottom: 4px; }
+.ka-user-menu .ka-user-head small { color: #94a3b8; }
+.ka-user-menu .dropdown-item { border-radius: 9px; padding: 8px 12px; font-size: 0.9rem; display: flex; gap: 10px; align-items: center; }
+.ka-user-menu .dropdown-item:hover { background: #f1f5f9; }
 
-/* Smaller laptops: drop the name beside the avatar */
-@media (max-width: 1399.98px) {
-    .ka-subnav-user-name, .ka-subnav-admin span { display: none; }
+/* Up to large screens: no name beside the avatar */
+@media (max-width: 1599.98px) {
+    .ka-subnav-user-name { display: none; }
 }
-/* Tablets and small laptops: tab style, icon over a short label */
+/* Laptops: the links move to a second row */
+@media (max-width: 1439.98px) {
+    .ka-topbar-inner { flex-wrap: wrap; row-gap: 0; padding-top: 3px; }
+    .ka-logo, .ka-subnav-end { min-height: 60px; }
+    .ka-subnav-end { margin-left: auto; }
+    .ka-subnav-links { order: 3; flex: 0 0 100%; gap: 6px; border-top: 1px solid #eef2f6; padding: 5px 0 6px; }
+}
+/* Tablets and small laptops: the second row shows tabs (icon over a short label) */
 @media (max-width: 1279.98px) {
-    .ka-subnav-brand span:last-child { display: none; }
-    .ka-subnav-brand { padding-right: 10px; }
-    .ka-subnav-inner { gap: 10px; padding: 6px 8px 6px 10px; }
-    .ka-subnav-links { justify-content: space-between; }
-    .ka-subnav-link { flex-direction: column; gap: 3px; padding: 7px 10px; font-size: 0.74rem; min-width: 64px; }
-    .ka-subnav-icon { font-size: 1.15rem; position: relative; }
+    .ka-subnav-links { justify-content: space-between; gap: 4px; padding: 6px 0 7px; }
+    .ka-subnav-link { flex-direction: column; gap: 3px; padding: 6px 10px; font-size: 0.74rem; flex: 1 0 auto; }
+    .ka-subnav-icon { font-size: 1.15rem; }
     .ka-label { display: none; }
     .ka-label-short { display: inline; }
-    .ka-subnav-link .ka-count { position: absolute; top: 2px; right: 8px; min-width: 16px; height: 16px; font-size: 0.62rem; }
-    .ka-subnav-end { padding-left: 8px; }
+    .ka-subnav-link .ka-count { position: absolute; top: 2px; right: calc(50% - 22px); min-width: 16px; height: 16px; font-size: 0.62rem; }
 }
 @media (max-width: 767.98px) {
-    .ka-subnav { padding: 10px 12px 0; }
+    .ka-topbar-inner { padding-left: 12px; padding-right: 12px; }
 }
 /* Phones: icons only */
-@media (max-width: 699.98px) {
-    .ka-subnav { padding: 8px 8px 0; }
-    .ka-subnav-inner { min-height: 52px; gap: 6px; padding: 5px 6px; }
-    .ka-subnav-brand { padding-right: 6px; }
-    .ka-subnav-logo { width: 32px; height: 32px; }
+@media (max-width: 575.98px) {
+    .ka-logo-text { font-size: 1.25rem; }
+    .ka-logo-mark { width: 34px; height: 34px; }
+    .ka-home-btn { padding: 7px 11px; }
+    .ka-home-btn span { display: none; }
     .ka-label-short { display: none; }
-    .ka-subnav-brand { border-right: 0; }
     .ka-subnav-links { gap: 0; }
-    .ka-subnav-link { min-width: 0; padding: 9px 8px; }
-    .ka-subnav-link .ka-count { right: 0; }
-    .ka-subnav-end { padding-left: 4px; border-left: 0; }
+    .ka-subnav-link { padding: 9px 6px; }
+    .ka-subnav-link .ka-count { right: calc(50% - 18px); }
 }
 
 /* Admin pages: K-Connect admin sidebar + K-Academy page in the main area */

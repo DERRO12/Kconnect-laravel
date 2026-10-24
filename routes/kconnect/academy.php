@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Route;
 // K-Academy module. Learner pages: /academy/..., admin: /academy/admin/..., AJAX: /academy/api/...
 // Page names are the old kacademy file names without .php, so old links keep working.
 
-Route::get('/academy', fn () => redirect(url(App\Support\Academy::learner() ? 'academy/dashboard' : 'academy/index')));
+Route::get('/academy', fn () => redirect(url('academy/index')));
 Route::get('/academy/admin', fn () => redirect(url('academy/admin/dashboard')));
 // One login: K-Academy uses the K-Connect employee and admin logins.
 Route::get('/academy/login', fn () => redirect(url('login')));

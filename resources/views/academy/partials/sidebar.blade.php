@@ -1,5 +1,5 @@
-{{-- K-Academy menu (was the kacademy/includes/sidebar.php side menu). On learner pages it is a bar under the
-     K-Connect top menu, so the two menus do not compete; admin pages use the K-Connect admin sidebar instead. --}}
+{{-- K-Academy menu (was the kacademy/includes/sidebar.php side menu and header). On learner pages it is the
+     page's top bar, with K-Connect one click away; admin pages use the K-Connect admin sidebar instead. --}}
 @if (!$is_admin_area)
 @php
     // page, its pages, icon, label, short label (narrow screens)
@@ -13,11 +13,11 @@
         ['notifications', ['notifications.php'], 'bi-bell', 'Notifications', 'Alerts'],
     ];
 @endphp
-<div class="ka-subnav{{ isAdminLoggedIn() ? ' ka-has-admin' : '' }}">
-    <div class="ka-subnav-inner">
-        <a class="ka-subnav-brand" href="{{ url('academy/dashboard') }}">
-            <span class="ka-subnav-logo"><i class="bi bi-mortarboard-fill"></i></span>
-            <span>K-Academy</span>
+<header class="ka-topbar{{ isAdminLoggedIn() ? ' ka-has-admin' : '' }}">
+    <div class="ka-topbar-inner">
+        <a class="ka-logo" href="{{ url('academy/index') }}" title="K-Academy home">
+            <span class="ka-logo-mark"><i class="bi bi-mortarboard-fill"></i></span>
+            <span class="ka-logo-text">K-Academy</span>
         </a>
         <nav class="ka-subnav-links" aria-label="K-Academy">
             @foreach ($ka_menu as [$page, $pages, $icon, $label, $short])
@@ -34,28 +34,40 @@
             @endforeach
         </nav>
         <div class="ka-subnav-end">
-            @if (isAdminLoggedIn())
-                <a class="ka-subnav-admin" href="{{ url('academy/admin/dashboard') }}" title="K-Academy admin">
-                    <i class="bi bi-gear"></i><span>Manage</span>
-                </a>
-            @endif
-            <a class="ka-subnav-user {{ in_array($current_page, ['profile.php']) ? 'active' : '' }}" href="{{ url('academy/profile') }}" title="My K-Academy profile">
-                <span class="ka-avatar">{{ strtoupper(substr($user['full_name'] ?? 'U', 0, 1)) }}</span>
-                <span class="ka-subnav-user-name">{{ $user['full_name'] ?? '' }}</span>
+            <a class="ka-home-btn" href="{{ url('/') }}" title="Back to K-Connect">
+                <i class="bi bi-house-door"></i><span>K-Connect</span>
             </a>
+            <div class="dropdown">
+                <button class="ka-subnav-user {{ in_array($current_page, ['profile.php']) ? 'active' : '' }}" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span class="ka-avatar">{{ strtoupper(substr($user['full_name'] ?? 'U', 0, 1)) }}</span>
+                    <span class="ka-subnav-user-name">{{ $user['full_name'] ?? '' }}</span>
+                    <i class="bi bi-chevron-down ka-caret"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end ka-user-menu">
+                    <li class="ka-user-head">
+                        <strong>{{ $user['full_name'] ?? '' }}</strong>
+                        <small>{{ $user['employee_code'] ?? ($user['email'] ?? '') }}</small>
+                    </li>
+                    <li><a class="dropdown-item" href="{{ url('academy/profile') }}"><i class="bi bi-person"></i> My K-Academy profile</a></li>
+                    <li><a class="dropdown-item" href="{{ url('academy/index') }}"><i class="bi bi-mortarboard"></i> K-Academy home</a></li>
+                    @if (isAdminLoggedIn())
+                        <li><a class="dropdown-item" href="{{ url('academy/admin/dashboard') }}"><i class="bi bi-gear"></i> Manage K-Academy</a></li>
+                    @endif
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{{ url('/') }}"><i class="bi bi-house-door"></i> Back to K-Connect</a></li>
+                    <li><a class="dropdown-item text-danger" href="{{ url(isLoggedIn() ? 'logout' : 'admin/logout') }}"><i class="bi bi-box-arrow-right"></i> Log out</a></li>
+                </ul>
+            </div>
         </div>
     </div>
-</div>
+</header>
 <script>
-// Keep the K-Academy bar right under the K-Connect menu whatever that menu's height, and the
+// Leave room for the K-Academy bar whatever its height (it is two rows on tablets), and keep the
 // current page's link in view when the links scroll sideways on narrow screens
 (function () {
     function fit() {
-        var nav = document.querySelector('.kc-topnav .navbar');
-        // Measured with the phone menu closed, so opening it does not push the page down
-        if (nav && !nav.querySelector('.navbar-collapse.show, .navbar-collapse.collapsing')) {
-            document.documentElement.style.setProperty('--kc-nav-h', nav.offsetHeight + 'px');
-        }
+        var bar = document.querySelector('.ka-topbar');
+        if (bar) document.documentElement.style.setProperty('--ka-bar-h', bar.offsetHeight + 'px');
         var links = document.querySelector('.ka-subnav-links');
         if (links) links.classList.toggle('ka-scrolls', links.scrollWidth > links.clientWidth + 4);
     }

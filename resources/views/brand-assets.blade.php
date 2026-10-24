@@ -501,7 +501,7 @@
                      <ul class="dropdown-menu dropdown-menu-end">
                        <li><h6 class="dropdown-header">ID: {!! session('employee_code') !!}</h6></li>
                          <li><a class="dropdown-item" href="{{ url('my-assets') }}"><i class="fas fa-laptop me-2"></i>My Assets</a></li>
-                         <li><a class="dropdown-item" href="{{ url('academy/dashboard') }}"><i class="fas fa-graduation-cap me-2"></i>My Learning (K-Academy)</a></li>
+                         <li><a class="dropdown-item" href="{{ url('academy') }}"><i class="fas fa-graduation-cap me-2"></i>My Learning (K-Academy)</a></li>
                         <li><a class="dropdown-item" href="{{ url('change-password') }}"><i class="fas fa-key me-2"></i>Password</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item text-danger" href="{{ url('logout') }}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>

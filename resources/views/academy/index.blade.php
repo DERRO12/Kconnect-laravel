@@ -415,13 +415,25 @@
             }
         }
      
+        /* Landing menu: same look as the K-Academy bar on the other pages */
+        .ka-land-nav { background: rgba(255, 255, 255, 0.92) !important; backdrop-filter: saturate(180%) blur(14px); border-bottom: 1px solid #e6ebf1; min-height: 68px; }
+        .ka-land-nav::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: linear-gradient(90deg, #009ada, #76bc21); }
+        .ka-land-mark { width: 38px; height: 38px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, #009ada, #76bc21); color: #fff; font-size: 1.15rem; box-shadow: 0 6px 14px -6px rgba(0, 154, 218, 0.7); }
+        .ka-land-nav .nav-link { font-weight: 600; color: #526077; border-radius: 10px; padding: 8px 14px !important; }
+        .ka-land-nav .nav-link:hover { color: #0082b3; background: #f1f5f9; }
+        .ka-land-actions .btn { border-radius: 999px; padding: 7px 16px; font-weight: 600; }
+        .ka-land-home { border-color: #dbe3ec; color: #334155; }
+        .ka-land-home:hover { border-color: #009ada; color: #0082b3; background: rgba(0, 154, 218, 0.06); }
+        @media (max-width: 991.98px) { .ka-land-actions { padding: 10px 0 6px; } }
     </style>
 </head>
 <body>
     <!-- Navigation -->
-     <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm">
+     <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm ka-land-nav">
         <div class="container">
-            <a class="navbar-brand" href="index">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="index">
+                <span class="ka-land-mark"><i class="bi bi-mortarboard-fill"></i></span>
                 <span class="gradient-text fw-bold fs-3">K-Academy</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -439,14 +451,16 @@
                         <a class="nav-link" href="browse-course">All Courses</a>
                     </li>
                 </ul>
-                <div class="d-flex gap-2 ms-3">
-                    <?php if (isLoggedIn()): ?>
+                <div class="d-flex gap-2 ms-lg-3 ka-land-actions">
+                    <a href="<?php echo url('/'); ?>" class="btn btn-outline-secondary btn-sm ka-land-home" title="Back to K-Connect">
+                        <i class="bi bi-house-door"></i> K-Connect
+                    </a>
+                    <?php if ($user): ?>
                         <a href="dashboard" class="btn btn-primary btn-sm">
-                            <i class="bi bi-speedometer2"></i> Dashboard
+                            <i class="bi bi-speedometer2"></i> My Dashboard
                         </a>
                     <?php else: ?>
-                        <a href="login" class="btn btn-outline-primary btn-sm">Login</a>
-                        <a href="register" class="btn btn-primary btn-sm">Register</a>
+                        <a href="<?php echo url('login'); ?>" class="btn btn-primary btn-sm">Login</a>
                     <?php endif; ?>
                 </div>
             </div>
@@ -745,7 +759,7 @@
                 <div class="col-md-2 mb-4">
                     <h5 class="footer-title">Quick Links</h5>
                     <ul class="footer-links">
-                        <li><a href="https://kconnect.kibokogroup.com" target="_blank">Back to K-Connect</a></li>
+                        <li><a href="<?php echo url('/'); ?>">Back to K-Connect</a></li>
                         <li><a href="https://kibokoenterprises.com/" target="_blank">Company Website</a></li>
                         <li><a href="#" target="_blank">Employee Handbook</a></li>
                     </ul>

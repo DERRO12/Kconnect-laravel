@@ -67,12 +67,8 @@
                 <a class="btn btn-sm btn-outline-secondary" href="{{ url('admin/dashboard') }}"><i class="fas fa-th-large me-1"></i> K-Connect Admin</a>
             </div>
         </div>
-@else
-    {{-- Learner pages: the K-Connect top menu --}}
-    <div class="kc-topnav">
-        @include('partials.navbar')
-    </div>
 @endif
+{{-- Learner pages: the K-Academy menu bar (academy.partials.sidebar) replaces the K-Connect menu --}}
 
     <div class="container-fluid">
         <div class="row">
