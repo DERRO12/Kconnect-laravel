@@ -215,7 +215,7 @@
     });
     </script>
     <meta name="ka-chunk-url" content="upload-video-chunk">
-    <script src="../assets/js/ka-video-upload.js"></script>
+    <script src="../assets/js/ka-video-upload.js?v=<?php echo @filemtime(public_path('academy-files/assets/js/ka-video-upload.js')); ?>"></script>
 
     <!-- Edit Lesson Modal -->
     <div class="modal fade" id="editLessonModal" tabindex="-1">

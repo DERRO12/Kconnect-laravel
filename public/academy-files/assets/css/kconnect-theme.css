@@ -305,81 +305,111 @@ body.ka-page {
 .ka-page .text-primary { color: #009ada !important; }
 .ka-page .progress-bar { background: linear-gradient(135deg, #009ada 0%, #76bc21 100%); }
 
-/* Learner pages: K-Connect top menu (fixed) + K-Academy bar under it */
-body.ka-learner { padding-top: 76px; }
+/* Learner pages: K-Connect top menu (fixed) + K-Academy bar under it.
+   --kc-nav-h is the K-Connect menu's real height (set by the bar's script); 76px until then. */
+body.ka-learner { padding-top: var(--kc-nav-h, 76px); }
 .ka-learner .kc-topnav .navbar { z-index: 1040; }
 .ka-learner > .container-fluid { max-width: 1400px; margin: 0 auto; }
 .ka-learner > .container-fluid > .row > main,
 .ka-learner main.col-md-9 {
     flex: 0 0 100%; max-width: 100%; width: 100%; margin-left: 0 !important;
-    padding-left: 12px; padding-right: 12px;
 }
 .ka-subnav {
-    flex: 0 0 100%; max-width: 100%; position: sticky; top: 76px; z-index: 1020;
-    padding: 12px 12px 0; margin-bottom: 4px;
+    flex: 0 0 100%; max-width: 100%; position: sticky; top: var(--kc-nav-h, 76px); z-index: 1020;
+    padding: 14px 24px 0; margin-bottom: 4px;
 }
 .ka-subnav-inner {
-    display: flex; align-items: center; gap: 16px;
-    background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(12px);
-    border: 1px solid #e2e8f0; border-radius: 16px; padding: 8px 10px 8px 16px;
-    box-shadow: 0 6px 18px -8px rgba(15, 23, 42, 0.12);
+    display: flex; align-items: center; gap: 14px; min-height: 60px;
+    background: rgba(255, 255, 255, 0.97); backdrop-filter: saturate(180%) blur(12px);
+    border: 1px solid #e6ebf1; border-radius: 16px; padding: 8px 10px 8px 14px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px -12px rgba(15, 23, 42, 0.18);
 }
 .ka-subnav-brand {
     display: flex; align-items: center; gap: 10px; flex-shrink: 0;
-    font-weight: 800; color: #0f172a; text-decoration: none; font-size: 1.05rem;
-    padding-right: 16px; border-right: 1px solid #e2e8f0;
+    font-weight: 800; color: #0f172a; text-decoration: none; font-size: 1.05rem; letter-spacing: -0.01em;
+    padding-right: 14px; border-right: 1px solid #e6ebf1;
 }
 .ka-subnav-brand:hover { color: #0f172a; }
 .ka-subnav-logo {
-    width: 34px; height: 34px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center;
-    background: linear-gradient(135deg, #009ada 0%, #76bc21 100%); color: #fff; font-size: 1.05rem;
+    width: 36px; height: 36px; border-radius: 11px; display: inline-flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #009ada 0%, #76bc21 100%); color: #fff; font-size: 1.1rem;
+    box-shadow: 0 4px 10px -4px rgba(0, 154, 218, 0.6);
 }
 .ka-subnav-links {
-    display: flex; align-items: center; gap: 4px; flex: 1; min-width: 0;
-    overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;
+    display: flex; align-items: center; gap: 2px; flex: 1; min-width: 0;
+    overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; scroll-behavior: smooth;
 }
 .ka-subnav-links::-webkit-scrollbar { display: none; }
+.ka-subnav-links.ka-scrolls {
+    -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 28px), transparent);
+            mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 28px), transparent);
+}
 .ka-subnav-link {
-    display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
-    padding: 8px 12px; border-radius: 10px; color: #475569; font-weight: 600; font-size: 0.9rem;
+    position: relative; display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; flex-shrink: 0;
+    padding: 9px 11px; border-radius: 10px; color: #526077; font-weight: 600; font-size: 0.9rem; line-height: 1.2;
     text-decoration: none; transition: background 0.2s ease, color 0.2s ease;
 }
-.ka-subnav-link i { font-size: 1rem; }
-.ka-subnav-link:hover { background: #f1f5f9; color: #0082b3; }
+.ka-subnav-icon { display: inline-flex; font-size: 1rem; }
+.ka-label-short { display: none; }
+.ka-subnav-link:hover { background: #f3f6f9; color: #0082b3; }
 .ka-subnav-link.active {
     background: linear-gradient(135deg, rgba(0, 154, 218, 0.12) 0%, rgba(118, 188, 33, 0.12) 100%);
     color: #0082b3;
 }
 .ka-count {
-    min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; font-size: 0.72rem; font-weight: 700;
+    min-width: 19px; height: 19px; padding: 0 5px; border-radius: 10px; font-size: 0.7rem; font-weight: 700;
     display: inline-flex; align-items: center; justify-content: center; background: #ef4444; color: #fff;
 }
 .ka-count-green { background: #76bc21; }
-.ka-subnav-end { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.ka-subnav-end {
+    display: flex; align-items: center; gap: 6px; flex-shrink: 0; padding-left: 12px; border-left: 1px solid #e6ebf1;
+}
 .ka-subnav-admin, .ka-subnav-user {
     display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 10px;
-    color: #475569; font-weight: 600; font-size: 0.88rem; text-decoration: none;
+    color: #526077; font-weight: 600; font-size: 0.88rem; text-decoration: none; white-space: nowrap;
 }
-.ka-subnav-admin:hover, .ka-subnav-user:hover, .ka-subnav-user.active { background: #f1f5f9; color: #0082b3; }
+.ka-subnav-admin { border: 1px solid #e6ebf1; }
+.ka-subnav-admin:hover, .ka-subnav-user:hover, .ka-subnav-user.active { background: #f3f6f9; color: #0082b3; }
 .ka-avatar {
-    width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
     background: linear-gradient(135deg, #009ada 0%, #76bc21 100%); color: #fff; font-weight: 700; font-size: 0.85rem;
 }
 .ka-subnav-user-name { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-@media (max-width: 1439.98px) {
+/* Admins get the Manage button there instead of their name */
+.ka-has-admin .ka-subnav-user-name { display: none; }
+
+/* Smaller laptops: drop the name beside the avatar */
+@media (max-width: 1399.98px) {
     .ka-subnav-user-name, .ka-subnav-admin span { display: none; }
 }
-@media (max-width: 991.98px) {
-    body.ka-learner { padding-top: 70px; }
-    .ka-subnav { top: 70px; padding: 8px 8px 0; }
+/* Tablets and small laptops: tab style, icon over a short label */
+@media (max-width: 1279.98px) {
     .ka-subnav-brand span:last-child { display: none; }
     .ka-subnav-brand { padding-right: 10px; }
-    .ka-subnav-inner { gap: 10px; padding: 6px 8px; }
+    .ka-subnav-inner { gap: 10px; padding: 6px 8px 6px 10px; }
+    .ka-subnav-links { justify-content: space-between; }
+    .ka-subnav-link { flex-direction: column; gap: 3px; padding: 7px 10px; font-size: 0.74rem; min-width: 64px; }
+    .ka-subnav-icon { font-size: 1.15rem; position: relative; }
+    .ka-label { display: none; }
+    .ka-label-short { display: inline; }
+    .ka-subnav-link .ka-count { position: absolute; top: 2px; right: 8px; min-width: 16px; height: 16px; font-size: 0.62rem; }
+    .ka-subnav-end { padding-left: 8px; }
 }
-@media (max-width: 575.98px) {
-    .ka-subnav-link span:not(.ka-count) { display: none; }
-    .ka-subnav-link { padding: 8px 10px; }
-    .ka-subnav-link i { font-size: 1.15rem; }
+@media (max-width: 767.98px) {
+    .ka-subnav { padding: 10px 12px 0; }
+}
+/* Phones: icons only */
+@media (max-width: 699.98px) {
+    .ka-subnav { padding: 8px 8px 0; }
+    .ka-subnav-inner { min-height: 52px; gap: 6px; padding: 5px 6px; }
+    .ka-subnav-brand { padding-right: 6px; }
+    .ka-subnav-logo { width: 32px; height: 32px; }
+    .ka-label-short { display: none; }
+    .ka-subnav-brand { border-right: 0; }
+    .ka-subnav-links { gap: 0; }
+    .ka-subnav-link { min-width: 0; padding: 9px 8px; }
+    .ka-subnav-link .ka-count { right: 0; }
+    .ka-subnav-end { padding-left: 4px; border-left: 0; }
 }
 
 /* Admin pages: K-Connect admin sidebar + K-Academy page in the main area */

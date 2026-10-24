@@ -20,8 +20,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url('academy/assets/css/style.css') }}">
-    <link rel="stylesheet" href="{{ url('academy/assets/css/kconnect-theme.css') }}">
+    <link rel="stylesheet" href="{{ url('academy/assets/css/style.css') }}?v={{ @filemtime(public_path('academy-files/assets/css/style.css')) }}">
+    <link rel="stylesheet" href="{{ url('academy/assets/css/kconnect-theme.css') }}?v={{ @filemtime(public_path('academy-files/assets/css/kconnect-theme.css')) }}">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
     // Pages that do not load Bootstrap's JS themselves still need it for the menus, dropdowns and pop-ups
