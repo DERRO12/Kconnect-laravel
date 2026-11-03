@@ -302,7 +302,14 @@ class Academy
         $ka = self::db();
         $existing = $ka->selectOne('SELECT id FROM certificates WHERE user_id = ? AND course_id = ?', [$userId, $courseId]);
         if ($existing) {
-            return (int) $existing['id'];
+            return (int) $existing['id'];   // certificates already issued are never changed here
+        }
+        if (! ka_course_finished($userId, $courseId)) {
+            return 0;                       // not every requirement met yet: no certificate
+        }
+        if ($quizResultId === null) {
+            $quizResultId = $ka->selectOne('SELECT qr.id FROM quiz_results qr JOIN quizzes q ON q.id = qr.quiz_id
+                WHERE qr.user_id = ? AND q.course_id = ? AND qr.passed = 1 ORDER BY qr.percentage DESC, qr.id DESC LIMIT 1', [$userId, $courseId])['id'] ?? null;
         }
         $number = ka_generate_certificate_number();
         $ka->insert("INSERT INTO certificates (certificate_number, user_id, course_id, quiz_result_id, issued_date, status) VALUES (?, ?, ?, ?, CURDATE(), 'pending')",

@@ -506,9 +506,10 @@ class LearnerController extends Controller
         // Check if course is completed
         $course_completed = ($completed_lessons == $total_lessons && $total_lessons > 0);
 
-        // Get certificate if exists
+        // Get certificate if exists (any certificate already issued is always shown)
+        $quiz_ok = $quiz_passed || ka_course_quiz_passed($user_id, $course_id);
         $certificate = null;
-        if ($course_completed && $quiz_passed) {
+        {
             $stmt = $pdo->prepare("SELECT * FROM certificates WHERE user_id = ? AND course_id = ?");
             $stmt->execute([$user_id, $course_id]);
             $certificate = $stmt->fetch();
@@ -1782,15 +1783,15 @@ class LearnerController extends Controller
             return ka_redirect('/my-courses.php', 'Course not found or you are not enrolled', 'danger');
         }
 
-        // Check if course is completed
+        // Same rule as everywhere: all lessons completed + the quiz passed when the course has one.
         $lessons_completed = ($data['total_lessons'] > 0 && $data['completed_lessons'] == $data['total_lessons']);
-        $course_completed = $lessons_completed && $data['quiz_passed'];
+        $course_completed = !$data['certificate_id'] ? ka_course_finished($user_id, $course_id) : true;
 
         if (!$course_completed) {
             $message = '';
             if (!$lessons_completed) {
                 $message = 'You need to complete all lessons first.';
-            } elseif (!$data['quiz_passed']) {
+            } elseif (!ka_course_quiz_passed($user_id, $course_id)) {
                 $message = 'You need to pass the quiz first.';
             }
 
@@ -1805,49 +1806,9 @@ class LearnerController extends Controller
 
         // Check if certificate already exists
         if (!$data['certificate_id']) {
-            // Generate new certificate number
-            $certificate_number = 'CERT-' . date('Y') . '-' . str_pad(mt_rand(1, 99999), 5, '0', STR_PAD_LEFT);
-            $issued_date = date('Y-m-d');
-
-            // Insert pending certificate record
-            $stmt = $pdo->prepare("
-                INSERT INTO certificates (
-                    certificate_number, user_id, course_id, quiz_result_id, 
-                    issued_date, status
-                ) VALUES (?, ?, ?, ?, ?, 'pending')
-            ");
-            $stmt->execute([
-                $certificate_number, 
-                $user_id, 
-                $course_id, 
-                $data['quiz_result_id'], 
-                $issued_date
-            ]);
-
-            $certificate_id = $pdo->lastInsertId();
-
-            // Create notification for all admins
-            $stmt = $pdo->prepare("SELECT id FROM users WHERE role = 'admin'");
-            $stmt->execute();
-            $admins = $stmt->fetchAll();
-
-            foreach ($admins as $admin) {
-                $notification_message = "New certificate pending approval for {$user['full_name']} - Course: {$data['title']}";
-                $notification_link = "admin/approve-certificate.php?id={$certificate_id}";
-
-                $stmt = $pdo->prepare("
-                    INSERT INTO notifications (user_id, title, message, type, link, created_at) 
-                    VALUES (?, 'Certificate Approval Required', ?, 'warning', ?, NOW())
-                ");
-                $stmt->execute([$admin['id'], $notification_message, $notification_link]);
-            }
-
-            // Log activity
-            ka_log_activity($pdo, $user_id, 'requested_certificate', [
-                'course_id' => $course_id,
-                'certificate_number' => $certificate_number,
-                'status' => 'pending'
-            ]);
+            // One place makes certificates: number, admin notifications, e-mails.
+            Academy::requestCertificate($user_id, $course_id, $data['quiz_result_id'] ? (int) $data['quiz_result_id'] : null);
+            ka_log_activity($pdo, $user_id, 'requested_certificate', ['course_id' => $course_id, 'status' => 'pending']);
 
             // Show pending message
             ka_flash('Your certificate has been submitted for approval. You will be notified once approved.', 'info');

@@ -470,7 +470,7 @@
                     <a href="quiz?course_id=<?php echo $course_id; ?>" class="btn btn-warning">
                         Take Final Quiz <i class="bi bi-patch-question"></i>
                     </a>
-                <?php elseif ($course_completed && $quiz_passed && !$certificate): ?>
+                <?php elseif ($course_completed && $quiz_ok && !$certificate): ?>
                     <a href="generate-certificate?course_id=<?php echo $course_id; ?>" class="btn btn-success">
                         <i class="bi bi-award"></i> Get Certificate
                     </a>

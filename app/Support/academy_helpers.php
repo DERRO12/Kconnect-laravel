@@ -225,12 +225,16 @@ if (! function_exists('ka_calculate_course_progress')) {
             $percentage = min(100, ($done / $total) * 100);
             // A course is completed only when every lesson is done AND, if it has a quiz, the quiz is passed.
             $finished = $percentage >= 100 && ka_course_quiz_passed($userId, $courseId);
-            $ka->update("UPDATE enrollments
-                SET progress_percentage = ?,
-                    status = ?,
-                    completed_at = CASE WHEN ? THEN COALESCE(completed_at, NOW()) ELSE NULL END,
-                    last_accessed = NOW()
-                WHERE user_id = ? AND course_id = ?", [$percentage, $finished ? 'completed' : 'in_progress', $finished ? 1 : 0, $userId, $courseId]);
+            // Nothing already earned is lost: a learner who holds a certificate for the course stays
+            // completed, and an earlier completion date is never cleared.
+            $ka->update("UPDATE enrollments e
+                SET e.progress_percentage = ?,
+                    e.status = CASE WHEN ? THEN 'completed'
+                        WHEN e.status = 'completed' AND EXISTS (SELECT 1 FROM certificates c WHERE c.user_id = e.user_id AND c.course_id = e.course_id) THEN 'completed'
+                        ELSE 'in_progress' END,
+                    e.completed_at = CASE WHEN ? THEN COALESCE(e.completed_at, NOW()) ELSE e.completed_at END,
+                    e.last_accessed = NOW()
+                WHERE e.user_id = ? AND e.course_id = ?", [$percentage, $finished ? 1 : 0, $finished ? 1 : 0, $userId, $courseId]);
 
             return round($percentage, 2);
         } catch (\Throwable $e) {
@@ -253,6 +257,22 @@ if (! function_exists('ka_course_quiz_passed')) {
 
         return (bool) $ka->selectOne('SELECT qr.id FROM quiz_results qr JOIN quizzes q ON q.id = qr.quiz_id
             WHERE qr.user_id = ? AND q.course_id = ? AND qr.passed = 1 LIMIT 1', [$userId, $courseId]);
+    }
+}
+
+if (! function_exists('ka_course_finished')) {
+    /**
+     * The one rule for finishing a course (and so for its certificate): every lesson completed
+     * (video lessons watched to the end) and, when the course has a quiz, the quiz passed.
+     */
+    function ka_course_finished($userId, $courseId): bool
+    {
+        $row = Academy::db()->selectOne('SELECT COUNT(*) AS total,
+                COUNT(CASE WHEN lp.completed = 1 THEN 1 END) AS done
+            FROM lessons l LEFT JOIN lesson_progress lp ON lp.lesson_id = l.id AND lp.user_id = ?
+            WHERE l.course_id = ?', [$userId, $courseId]);
+
+        return (int) $row['total'] > 0 && (int) $row['done'] >= (int) $row['total'] && ka_course_quiz_passed($userId, $courseId);
     }
 }
 

@@ -103,23 +103,10 @@ class ApiController extends Controller
         // Calculate overall course progress
         $progress = ka_calculate_course_progress($pdo, $user_id, $lesson['course_id']);
 
-        // Check if course is completed and generate certificate if needed
+        // All lessons done and (if the course has a quiz) the quiz passed: ask for the certificate.
+        // requestCertificate() checks the rule itself and an admin still approves it.
         if ($progress >= 100) {
-            // Check if user has passed the quiz
-            $stmt = $pdo->prepare("
-                SELECT qr.* FROM quiz_results qr
-                JOIN quizzes q ON qr.quiz_id = q.id
-                WHERE qr.user_id = ? AND q.course_id = ? AND qr.passed = 1
-                ORDER BY qr.created_at DESC
-                LIMIT 1
-            ");
-            $stmt->execute([$user_id, $lesson['course_id']]);
-            $quiz_result = $stmt->fetch();
-
-            if ($quiz_result) {
-                // All lessons done and the quiz passed: ask for the certificate (an admin approves it)
-                Academy::requestCertificate($user_id, (int) $lesson['course_id'], (int) $quiz_result['id']);
-            }
+            Academy::requestCertificate($user_id, (int) $lesson['course_id']);
         }
 
         return kc_json([
