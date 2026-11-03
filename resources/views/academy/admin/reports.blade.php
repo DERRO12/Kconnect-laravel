@@ -3,7 +3,7 @@
 @include('academy.partials.sidebar')
 @verbatim
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
 
 <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">

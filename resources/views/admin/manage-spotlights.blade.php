@@ -194,7 +194,7 @@
                                   @if(!empty($item['rating']) && $item['rating'] > 0)
                                       <div class="rating-stars" style="white-space: nowrap;">
                                           @php
-                                          $rating = floatval($item['rating']);
+                                          $rating = max(0, min(5, floatval($item['rating'])));
                                           $fullStars = floor($rating);
                                           $halfStar = ($rating - $fullStars) >= 0.5;
                                           for ($i = 1; $i <= 5; $i++) {

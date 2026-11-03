@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- SortableJS for drag and drop -->
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <style>
         :root { --kiboko-green: #76bc21; --kiboko-blue: #009ada; --grad: linear-gradient(135deg, #009ada 0%, #76bc21 100%); }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; }
