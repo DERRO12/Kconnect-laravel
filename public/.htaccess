@@ -44,8 +44,11 @@
 
 
 # ---- Speed: compress text and let browsers keep static files ----
+# (AddOutputFilterByType needs mod_filter as well; without both, the rule is skipped, never a 500)
 <IfModule mod_deflate.c>
-    AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml text/javascript application/javascript application/x-javascript application/json application/xml image/svg+xml font/ttf font/otf
+    <IfModule mod_filter.c>
+        AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml text/javascript application/javascript application/x-javascript application/json application/xml image/svg+xml font/ttf font/otf
+    </IfModule>
 </IfModule>
 <IfModule mod_expires.c>
     ExpiresActive On
