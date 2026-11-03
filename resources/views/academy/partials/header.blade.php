@@ -26,6 +26,7 @@
     <script>
     // Pages that do not load Bootstrap's JS themselves still need it for the menus, dropdowns and pop-ups
     window.addEventListener('load', function () {
+        if (!window.AOS) document.documentElement.classList.add('ka-no-aos');
         if (window.bootstrap) return;
         var s = document.createElement('script');
         s.src = 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js';

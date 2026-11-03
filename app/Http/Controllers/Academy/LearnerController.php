@@ -433,6 +433,42 @@ class LearnerController extends Controller
 
         // YouTube, uploaded file, or an outside link (Vimeo, Google Drive, .mp4 address...)
         $video = Academy::video($current_lesson['video_url'], $current_lesson['video_type']);
+        // When the lesson was opened: outside videos (Vimeo, Drive...) cannot report playback,
+        // so for them "watched" means the page stayed open for the lesson's length.
+        if (! session()->has('ka_open.'.$current_lesson['id'])) {
+            session(['ka_open.'.$current_lesson['id'] => time()]);
+        }
+        // Watch-time clock restarts with each visit (api/update-progress checks against it).
+        $watchKey = 'ka_watch.'.$current_lesson['id'];
+        session([$watchKey => ['t' => time(), 'len' => (int) (session($watchKey)['len'] ?? 0)]]);
+        $ka_wait_seconds = 0;
+        if (in_array($video['kind'], ['vimeo', 'drive', 'link'], true) && (int) $current_lesson['duration'] > 0 && ! $current_lesson['completed']) {
+            $ka_wait_seconds = max(0, (int) floor($current_lesson['duration'] * 60 * 0.9) - (time() - (int) session('ka_open.'.$current_lesson['id'])));
+        }
+
+        // Notes, discussion and resources shown in tabs under the video
+        $stmt = $pdo->prepare('SELECT notes, updated_at FROM lesson_notes WHERE user_id = ? AND lesson_id = ?');
+        $stmt->execute([$user_id, $current_lesson['id']]);
+        $lesson_note = $stmt->fetch() ?: ['notes' => '', 'updated_at' => null];
+        $stmt = $pdo->prepare("
+            SELECT d.id, d.user_id, d.parent_id, d.comment, d.likes, d.created_at, u.full_name, u.profile_image,
+                   EXISTS (SELECT 1 FROM discussion_likes dl WHERE dl.discussion_id = d.id AND dl.user_id = ?) AS liked
+            FROM discussions d JOIN users u ON u.id = d.user_id
+            WHERE d.lesson_id = ? ORDER BY d.created_at ASC
+        ");
+        $stmt->execute([$user_id, $current_lesson['id']]);
+        $lesson_threads = [];
+        $lesson_replies = [];
+        foreach ($stmt->fetchAll() as $row) {
+            if ($row['parent_id']) {
+                $lesson_replies[$row['parent_id']][] = $row;
+            } else {
+                $lesson_threads[] = $row;
+            }
+        }
+        $lesson_threads = array_reverse($lesson_threads); // newest question first, replies oldest first
+        $lesson_comment_count = $stmt->rowCount();
+        $lesson_attachments = json_decode((string) $current_lesson['attachments'], true) ?: [];
 
         // Update last accessed
         $stmt = $pdo->prepare("UPDATE enrollments SET last_accessed = NOW() WHERE user_id = ? AND course_id = ?");
@@ -985,6 +1021,11 @@ class LearnerController extends Controller
             return ka_redirect('/browse-courses.php', 'You must be enrolled in this course to take the quiz', 'danger');
         }
 
+        // The quiz opens once every lesson is completed (each video watched to the end).
+        if (ka_calculate_course_progress($pdo, $user_id, $course_id) < 100) {
+            return ka_redirect('/course-player.php?id=' . $course_id, 'Finish every lesson (watch each video to the end) before taking the quiz.', 'warning');
+        }
+
         // Get quiz questions
         $stmt = $pdo->prepare("
             SELECT * FROM quiz_questions 
@@ -1106,6 +1147,9 @@ class LearnerController extends Controller
                         ");
                         $stmt->execute([$user_id, $course_id]);
                         $progress = $stmt->fetch();
+
+                        // Lessons done + quiz passed: the course is now completed.
+                        ka_calculate_course_progress($pdo, $user_id, $course_id);
 
                         if ($progress['total'] > 0 && $progress['completed'] == $progress['total']) {
                             // Course finished: the certificate waits for an admin's approval

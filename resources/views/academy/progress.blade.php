@@ -491,6 +491,10 @@
     font-size: 1.3rem;
 }
 
+.achievement-item .achievement-icon {
+    width: 45px; height: 45px; min-width: 45px; max-width: 45px;
+    padding: 0; margin: 0; flex-shrink: 0; box-shadow: none; border: 0;
+}
 .achievement-icon.course { background: #e3f2fd; color: #1976d2; }
 .achievement-icon.certificate { background: #fff3e0; color: #f57c00; }
 .achievement-icon.quiz { background: #e8f5e9; color: #388e3c; }
@@ -593,8 +597,10 @@
     }
     
     .stats-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
     }
+    .stats-grid .stat-card { margin: 0; }
     
     .course-main-info {
         flex-direction: column;
@@ -614,6 +620,43 @@
     .lessons-grid {
         grid-template-columns: 1fr;
     }
+
+    .course-meta {
+        flex-wrap: wrap;
+        gap: 0.4rem 1rem;
+    }
+
+    .course-badges { flex-wrap: wrap; }
+}
+
+@media (max-width: 575.98px) {
+    .period-selector {
+        display: flex;
+        width: 100%;
+    }
+    .period-btn {
+        flex: 1 1 0;
+        padding: 0.45rem 0.25rem;
+        font-size: 0.8rem;
+        white-space: nowrap;
+    }
+    .profile-header { padding: 1.25rem; }
+    .profile-avatar { width: 64px; height: 64px; font-size: 1.6rem; flex-shrink: 0; }
+    .course-meta { font-size: 0.78rem; }
+    .course-meta-item { white-space: nowrap; }
+    .profile-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.5rem;
+        width: 100%;
+    }
+    .profile-stat-item { padding: 0.75rem 0.4rem; margin: 0; }
+    .profile-stat-value { font-size: 1.35rem; }
+    .profile-stat-label { font-size: 0.68rem; letter-spacing: 0.2px; }
+    .stats-grid { grid-template-columns: 1fr; gap: 0.75rem; }
+    .stat-card { padding: 1rem; margin: 0; }
+    .achievement-item { padding: 0.75rem; gap: 0.75rem; }
+    .progress-row { gap: 0.6rem; }
 }
 </style>
 

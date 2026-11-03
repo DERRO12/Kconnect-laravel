@@ -192,6 +192,9 @@ class AdminController extends Controller
                     if ($stmt->execute([$title, $slug, $description, $thumbnail, $category, $category_type, $level, $duration, $status, $user_id])) {
                         $courseId = $pdo->lastInsertId();
                         ka_log_activity($pdo, $user_id, 'created_course', ['course_id' => $courseId, 'title' => $title]);
+                        if ($status === 'published') {
+                            \App\Support\AcademyMailer::coursePublished((int) $courseId);
+                        }
                         return ka_redirect('/admin/manage_lessons.php?course_id=' . $courseId, 'Course created successfully. Now add lessons.', 'success');
                     } else {
                         $error = 'Failed to create course';
@@ -294,6 +297,9 @@ class AdminController extends Controller
 
                         if ($stmt->execute([$title, $slug, $description, $thumbnail, $category, $level, $duration, $status, $course_id])) {
                             ka_log_activity($pdo, $user_id, 'updated_course', ['course_id' => $course_id, 'title' => $title]);
+                            if ($status === 'published') {
+                                \App\Support\AcademyMailer::coursePublished((int) $course_id);
+                            }
 
                             // Update session data
                             $course['title'] = $title;
@@ -605,6 +611,9 @@ class AdminController extends Controller
                 'title' => $title
             ]);
 
+            // First lesson of an already published course: announce it (once).
+            \App\Support\AcademyMailer::coursePublished((int) $course_id);
+
             return ka_redirect('/admin/manage_lessons.php?course_id=' . $course_id, 'Lesson added successfully', 'success');
         } else {
             return ka_redirect('/admin/manage_lessons.php?course_id=' . $course_id, 'Failed to add lesson', 'danger');
@@ -696,6 +705,9 @@ class AdminController extends Controller
             $added++;
         }
 
+        if ($added) {
+            \App\Support\AcademyMailer::coursePublished((int) $course_id);
+        }
         $message = $added . ' lesson' . ($added === 1 ? '' : 's') . ' added from the uploaded videos.';
         if ($failed) {
             $message .= ' Not uploaded: ' . implode('; ', $failed);
@@ -1957,6 +1969,7 @@ class AdminController extends Controller
                                 VALUES (?, 'Certificate Approved', ?, 'success', ?, NOW())
                             ");
                             $stmt->execute([$cert['user_id'], $notification_message, $notification_link]);
+                            \App\Support\AcademyMailer::certificateApproved((int) $cert_id);
                         }
                     }
 
@@ -2096,6 +2109,8 @@ class AdminController extends Controller
                 ");
                 $stmt->execute([$certificate['user_id'], $notification_message, $notification_link]);
 
+                \App\Support\AcademyMailer::certificateApproved((int) $certificate_id);
+
                 // Log activity
                 ka_log_activity($pdo, $user_id, 'approved_certificate', [
                     'certificate_id' => $certificate_id,
@@ -2129,6 +2144,8 @@ class AdminController extends Controller
                     VALUES (?, 'Certificate Rejected', ?, 'danger', NULL, NOW())
                 ");
                 $stmt->execute([$certificate['user_id'], $notification_message]);
+
+                \App\Support\AcademyMailer::certificateRejected((int) $certificate_id);
 
                 // Log activity
                 ka_log_activity($pdo, $user_id, 'rejected_certificate', [

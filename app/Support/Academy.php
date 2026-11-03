@@ -201,6 +201,7 @@ class Academy
             ]);
             $user = $ka->selectOne('SELECT * FROM users WHERE id = ?', [$ka->getPdo()->lastInsertId()]);
             self::log($user['id'], 'account_linked', ['employee_id' => $employee['id']]);
+            AcademyMailer::welcome($user);
         } elseif ($user['status'] === 'pending' || $user['full_name'] !== $employee['full_name']) {
             // Old self-registrations waited for approval: an active K-Connect employee needs none.
             // 'inactive' is kept: that is an admin switching off K-Academy for this person.
@@ -313,6 +314,7 @@ class Academy
         foreach ($ka->select("SELECT id FROM users WHERE role = 'admin'") as $admin) {
             self::notify((int) $admin['id'], 'Certificate Approval Required', "New certificate pending approval for {$who} - Course: {$course}", 'warning', "admin/approve-certificate.php?id={$id}");
         }
+        AcademyMailer::certificateRequested($id);
         self::log($userId, 'requested_certificate', ['course_id' => $courseId, 'certificate_number' => $number, 'status' => 'pending']);
 
         return $id;
