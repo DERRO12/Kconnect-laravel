@@ -345,6 +345,58 @@ if (! function_exists('ka_ensure_dir')) {
     }
 }
 
+if (! function_exists('ka_thumb')) {
+    /**
+     * A small copy of a course image for showing it at $width pixels (course images are often
+     * 1-2MB photos shown at 50-400px). $path is relative to public/academy-files, e.g.
+     * 'assets/uploads/courses/x.png'; the copy is made once in that folder's _thumbs/<width>/ and its
+     * path is returned in the same form. Falls back to $path when GD is missing or the image can't be read.
+     */
+    function ka_thumb(string $path, int $width): string
+    {
+        $src = public_path('academy-files/'.ltrim($path, '/'));
+        if ($path === '' || preg_match('#^https?://#i', $path) || ! is_file($src) || ! function_exists('imagecreatefromstring')) {
+            return $path;
+        }
+        $info = @getimagesize($src);
+        if (! $info || $info[0] <= $width * 1.25 || $info[0] * $info[1] > 40000000) {
+            return $path; // already small, or too big to resize safely
+        }
+        $png = $info[2] === IMAGETYPE_PNG;
+        $name = pathinfo($src, PATHINFO_FILENAME).($png ? '.png' : '.jpg');
+        $rel = dirname($path).'/_thumbs/'.$width.'/'.$name;
+        $dest = public_path('academy-files/'.$rel);
+        if (is_file($dest) && filemtime($dest) >= filemtime($src)) {
+            return $rel;
+        }
+        try {
+            $img = @imagecreatefromstring((string) file_get_contents($src));
+            if (! $img) {
+                return $path;
+            }
+            $height = (int) round($info[1] * $width / $info[0]);
+            $out = imagecreatetruecolor($width, $height);
+            if ($png) {
+                imagealphablending($out, false);
+                imagesavealpha($out, true);
+            }
+            imagecopyresampled($out, $img, 0, 0, 0, 0, $width, $height, $info[0], $info[1]);
+            if (! is_dir(dirname($dest))) {
+                @mkdir(dirname($dest), 0775, true);
+            }
+            $ok = $png ? imagepng($out, $dest, 9) : imagejpeg($out, $dest, 82);
+            imagedestroy($img);
+            imagedestroy($out);
+
+            return $ok ? $rel : $path;
+        } catch (\Throwable $e) {
+            report($e);
+
+            return $path;
+        }
+    }
+}
+
 if (! function_exists('ka_course_thumbnail_url')) {
     /** Old getCourseThumbnailUrl(): the course image, or a coloured placeholder. */
     function ka_course_thumbnail_url($thumbnail, $title = 'Course', $category = 'default'): string
@@ -368,7 +420,7 @@ if (! function_exists('ka_course_thumbnail')) {
         $color = $colors[$category] ?? $colors['default'];
         $thumb = $course['thumbnail'] ?? '';
         if ($thumb !== '' && (preg_match('#^https?://#i', $thumb) || file_exists(Academy::filePath('courses', $thumb)))) {
-            return ['exists' => true, 'url' => Academy::fileUrl('courses', $thumb)];
+            return ['exists' => true, 'url' => preg_match('#^https?://#i', $thumb) ? $thumb : url('academy/'.ka_thumb('assets/uploads/courses/'.$thumb, 640))];
         }
 
         return ['exists' => false, 'url' => "https://placehold.co/600x400/{$color}/white?text=".urlencode(ucfirst($category).'+Course')];

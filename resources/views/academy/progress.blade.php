@@ -769,7 +769,7 @@
                                     $thumb_exists = !empty($course['thumbnail']) && file_exists($thumb_path);
                                     ?>
                                     <?php if ($thumb_exists): ?>
-                                        <img src="<?php echo $thumb_path; ?>" 
+                                        <img src="<?php echo ka_thumb($thumb_path, 160); ?>" loading="lazy" decoding="async" 
                                              alt="<?php echo htmlspecialchars($course['title']); ?>"
                                              class="course-thumbnail">
                                     <?php else: ?>
