@@ -75,6 +75,12 @@
                                             </small>
                                         </div>
                                         <div class="col-auto">
+                                            <?php if ($lesson_quizzes_on): $lq = $lesson_quizzes[(int) $lesson['id']] ?? null; ?>
+                                            <a href="manage_quiz?lesson_id=<?php echo (int) $lesson['id']; ?>" class="btn btn-sm <?php echo $lq && $lq['questions'] > 0 ? 'btn-warning' : 'btn-outline-warning'; ?>"
+                                               title="<?php echo $lq ? 'Lesson quiz: ' . (int) $lq['questions'] . ' question(s). Learners pass it after the video to complete the lesson.' : 'Add a quiz learners must pass to complete this lesson'; ?>">
+                                                <i class="bi bi-patch-question"></i> Quiz<?php echo $lq && $lq['questions'] > 0 ? ' (' . (int) $lq['questions'] . ')' : ''; ?>
+                                            </a>
+                                            <?php endif; ?>
                                             <button class="btn btn-sm btn-outline-primary edit-lesson-btn" data-lesson-id="<?php echo $lesson['id']; ?>">
                                                 <i class="bi bi-pencil"></i>
                                             </button>

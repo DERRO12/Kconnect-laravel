@@ -85,8 +85,13 @@ class ApiController extends Controller
         }
 
         // A lesson with a video is completed only once the whole video has been watched.
-        if ($completed && ($blocked = self::videoNotFinished($user_id, $lesson))) {
+        if ($completed && ($blocked = Academy::videoNotFinished($user_id, $lesson))) {
             return kc_json(['success' => false, 'message' => $blocked, 'needs_video' => true]);
+        }
+        // ...and, when the lesson has a quiz, once that quiz is passed.
+        if ($completed && ($lessonQuiz = Academy::lessonQuiz((int) $lesson['id'])) && ! Academy::quizPassed($user_id, (int) $lessonQuiz['id'])) {
+            return kc_json(['success' => false, 'message' => 'Pass the lesson quiz to complete this lesson.', 'needs_quiz' => true,
+                'quiz_url' => 'quiz?lesson_id='.(int) $lesson['id']]);
         }
 
         // Update progress
@@ -116,50 +121,6 @@ class ApiController extends Controller
         ]);
 
         return response('');
-    }
-
-    /**
-     * Why the learner cannot complete this lesson yet, or null when they can.
-     * YouTube and uploaded videos: watched (without skipping) to within a few seconds of the end.
-     * Outside videos (Vimeo, Drive, links) cannot report playback: the lesson page has to have been
-     * open for the lesson's length. Lessons without a video can be completed at any time.
-     */
-    private static function videoNotFinished(int $userId, array $lesson): ?string
-    {
-        $video = Academy::video($lesson['video_url'], $lesson['video_type']);
-        $minutes = (int) ($lesson['duration'] ?? 0);
-
-        if (in_array($video['kind'], ['youtube', 'file'], true)) {
-            $row = Academy::db()->selectOne('SELECT watched_duration, completed FROM lesson_progress WHERE user_id = ? AND lesson_id = ?', [$userId, $lesson['id']]);
-            if ($row && (int) $row['completed'] === 1) {
-                return null;
-            }
-            $watched = (int) ($row['watched_duration'] ?? 0);
-            $length = (int) (session('ka_watch.'.$lesson['id'])['len'] ?? 0);
-            if ($length <= 0) {
-                $length = $minutes * 60;
-            }
-            if ($length <= 0) {
-                return $watched > 0 ? null : 'Please play the video to the end first.';
-            }
-            if ($watched < $length - max(3, (int) floor($length * 0.02))) {
-                $left = $length - $watched;
-
-                return 'Please watch the whole video first ('.($left >= 60 ? ceil($left / 60).' min' : $left.' sec').' left).';
-            }
-
-            return null;
-        }
-
-        if (in_array($video['kind'], ['vimeo', 'drive', 'link'], true) && $minutes > 0) {
-            $opened = (int) session('ka_open.'.$lesson['id'], time());
-            $need = (int) floor($minutes * 60 * 0.9) - (time() - $opened);
-            if ($need > 0) {
-                return 'Please watch the whole video first ('.($need >= 60 ? ceil($need / 60).' min' : $need.' sec').' left).';
-            }
-        }
-
-        return null;
     }
 
     /** academy/api/delete-comment (was api/delete-comment.php) */

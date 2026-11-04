@@ -84,7 +84,7 @@ class LearnerController extends Controller
             JOIN courses c ON e.course_id = c.id
             LEFT JOIN lessons l ON c.id = l.course_id
             LEFT JOIN lesson_progress lp ON l.id = lp.lesson_id AND lp.user_id = e.user_id AND lp.completed = 1
-            LEFT JOIN quizzes q ON c.id = q.course_id
+            LEFT JOIN quizzes q ON c.id = q.course_id" . Academy::courseQuizOnly('q') . "
             LEFT JOIN quiz_results qr ON q.id = qr.quiz_id AND qr.user_id = e.user_id
             WHERE e.user_id = ?
             GROUP BY c.id, e.id
@@ -446,6 +446,23 @@ class LearnerController extends Controller
             $ka_wait_seconds = max(0, (int) floor($current_lesson['duration'] * 60 * 0.9) - (time() - (int) session('ka_open.'.$current_lesson['id'])));
         }
 
+        // The lesson's own quiz (if any): it opens once the video is watched, and passing it completes the lesson.
+        $lesson_quiz = Academy::lessonQuiz((int) $current_lesson['id']);
+        $lesson_quiz_passed = false;
+        $lesson_quiz_best = null;
+        $lesson_quiz_attempts = 0;
+        $lesson_video_done = true;
+        if ($lesson_quiz) {
+            $row = Academy::db()->selectOne('SELECT COUNT(*) AS n, MAX(percentage) AS best, MAX(passed) AS passed FROM quiz_results WHERE user_id = ? AND quiz_id = ?', [$user_id, $lesson_quiz['id']]);
+            $lesson_quiz_attempts = (int) ($row['n'] ?? 0);
+            $lesson_quiz_best = $row['best'] !== null ? round((float) $row['best']) : null;
+            $lesson_quiz_passed = (bool) ($row['passed'] ?? false);
+            $lesson_video_done = Academy::videoNotFinished((int) $user_id, $current_lesson) === null;
+        }
+        $lesson_quiz_ids = Academy::hasLessonQuizzes()
+            ? array_map('intval', array_column(Academy::db()->select("SELECT DISTINCT lesson_id FROM quizzes WHERE course_id = ? AND lesson_id IS NOT NULL AND status = 'active'", [$course_id]), 'lesson_id'))
+            : [];
+
         // Notes, discussion and resources shown in tabs under the video
         $stmt = $pdo->prepare('SELECT notes, updated_at FROM lesson_notes WHERE user_id = ? AND lesson_id = ?');
         $stmt->execute([$user_id, $current_lesson['id']]);
@@ -480,7 +497,7 @@ class LearnerController extends Controller
         $next_lesson = $current_index < count($lessons) - 1 ? $lessons[$current_index + 1] : null;
 
         // Get quiz for this course
-        $stmt = $pdo->prepare("SELECT * FROM quizzes WHERE course_id = ?");
+        $stmt = $pdo->prepare("SELECT * FROM quizzes WHERE course_id = ?" . Academy::courseQuizOnly() . " ORDER BY status = 'active' DESC, id LIMIT 1");
         $stmt->execute([$course_id]);
         $quiz = $stmt->fetch();
 
@@ -733,7 +750,7 @@ class LearnerController extends Controller
             JOIN courses c ON e.course_id = c.id
             LEFT JOIN lessons l ON c.id = l.course_id
             LEFT JOIN lesson_progress lp ON l.id = lp.lesson_id AND lp.user_id = e.user_id AND lp.completed = 1
-            LEFT JOIN quizzes q ON c.id = q.course_id
+            LEFT JOIN quizzes q ON c.id = q.course_id" . Academy::courseQuizOnly('q') . "
             LEFT JOIN quiz_results qr ON q.id = qr.quiz_id AND qr.user_id = e.user_id
             LEFT JOIN certificates cert ON c.id = cert.course_id AND cert.user_id = e.user_id
             WHERE e.user_id = ?
@@ -996,20 +1013,37 @@ class LearnerController extends Controller
 
 
         $course_id = isset($_GET['course_id']) ? (int)$_GET['course_id'] : 0;
+        $lesson_id = isset($_GET['lesson_id']) ? (int)$_GET['lesson_id'] : 0;
+        $lesson = null;
 
-        if (!$course_id) {
-            return ka_redirect('/my-courses.php', 'Invalid course ID', 'danger');
+        if ($lesson_id) {
+            // A lesson quiz: it belongs to one lesson and opens once that lesson's video is watched.
+            $stmt = $pdo->prepare("SELECT id, course_id, title, video_url, video_type, duration FROM lessons WHERE id = ?");
+            $stmt->execute([$lesson_id]);
+            $lesson = $stmt->fetch();
+            $lessonQuiz = $lesson ? Academy::lessonQuiz($lesson_id) : null;
+            if (!$lessonQuiz) {
+                return ka_redirect('/my-courses.php', 'Quiz not found or not active', 'danger');
+            }
+            $course_id = (int) $lesson['course_id'];
+            $stmt = $pdo->prepare("SELECT q.*, c.title as course_title, c.id as course_id FROM quizzes q JOIN courses c ON q.course_id = c.id WHERE q.id = ?");
+            $stmt->execute([$lessonQuiz['id']]);
+            $quiz = $stmt->fetch();
+        } else {
+            if (!$course_id) {
+                return ka_redirect('/my-courses.php', 'Invalid course ID', 'danger');
+            }
+
+            // Get quiz details (the course final quiz, not a lesson quiz)
+            $stmt = $pdo->prepare("
+                SELECT q.*, c.title as course_title, c.id as course_id
+                FROM quizzes q
+                JOIN courses c ON q.course_id = c.id
+                WHERE q.course_id = ? AND q.status = 'active'" . Academy::courseQuizOnly('q') . "
+            ");
+            $stmt->execute([$course_id]);
+            $quiz = $stmt->fetch();
         }
-
-        // Get quiz details
-        $stmt = $pdo->prepare("
-            SELECT q.*, c.title as course_title, c.id as course_id
-            FROM quizzes q
-            JOIN courses c ON q.course_id = c.id
-            WHERE q.course_id = ? AND q.status = 'active'
-        ");
-        $stmt->execute([$course_id]);
-        $quiz = $stmt->fetch();
 
         if (!$quiz) {
             return ka_redirect('/my-courses.php', 'Quiz not found or not active', 'danger');
@@ -1022,8 +1056,14 @@ class LearnerController extends Controller
             return ka_redirect('/browse-courses.php', 'You must be enrolled in this course to take the quiz', 'danger');
         }
 
-        // The quiz opens once every lesson is completed (each video watched to the end).
-        if (ka_calculate_course_progress($pdo, $user_id, $course_id) < 100) {
+        $back_url = 'course-player?id=' . $course_id . ($lesson ? '&lesson=' . (int) $lesson['id'] : '');
+        if ($lesson) {
+            // The lesson quiz opens once the lesson's video has been watched to the end.
+            if ($blocked = Academy::videoNotFinished((int) $user_id, $lesson)) {
+                return ka_redirect('/course-player.php?id=' . $course_id . '&lesson=' . (int) $lesson['id'], 'Watch the whole lesson video before taking its quiz.', 'warning');
+            }
+        } elseif (ka_calculate_course_progress($pdo, $user_id, $course_id) < 100) {
+            // The course quiz opens once every lesson is completed (each video watched to the end).
             return ka_redirect('/course-player.php?id=' . $course_id, 'Finish every lesson (watch each video to the end) before taking the quiz.', 'warning');
         }
 
@@ -1136,8 +1176,21 @@ class LearnerController extends Controller
                         'passed' => $passed
                     ]);
 
+                    // A passed lesson quiz completes its lesson (the video was already watched).
+                    if ($passed && $lesson) {
+                        $stmt = $pdo->prepare("
+                            INSERT INTO lesson_progress (user_id, lesson_id, course_id, completed, completed_at, last_accessed)
+                            VALUES (?, ?, ?, 1, NOW(), NOW())
+                            ON DUPLICATE KEY UPDATE completed = 1, completed_at = COALESCE(completed_at, NOW()), last_accessed = NOW()
+                        ");
+                        $stmt->execute([$user_id, $lesson['id'], $course_id]);
+                        if (ka_calculate_course_progress($pdo, $user_id, $course_id) >= 100) {
+                            Academy::requestCertificate((int) $user_id, (int) $course_id);
+                        }
+                    }
+
                     // If passed, check if course is completed and generate certificate
-                    if ($passed) {
+                    if ($passed && !$lesson) {
                         // Check if all lessons are completed
                         $stmt = $pdo->prepare("
                             SELECT COUNT(*) as total,
@@ -1188,7 +1241,7 @@ class LearnerController extends Controller
 
         // Get quiz result details
         $stmt = $pdo->prepare("
-            SELECT qr.*, q.title as quiz_title, q.passing_score, q.show_answers,
+            SELECT qr.*, q.title as quiz_title, q.passing_score, q.show_answers," . (Academy::hasLessonQuizzes() ? ' q.lesson_id,' : '') . "
                    c.id as course_id, c.title as course_title
             FROM quiz_results qr
             JOIN quizzes q ON qr.quiz_id = q.id
@@ -1770,7 +1823,7 @@ class LearnerController extends Controller
             JOIN enrollments e ON c.id = e.course_id AND e.user_id = ?
             LEFT JOIN lessons l ON c.id = l.course_id
             LEFT JOIN lesson_progress lp ON l.id = lp.lesson_id AND lp.user_id = e.user_id AND lp.completed = 1
-            LEFT JOIN quizzes q ON c.id = q.course_id
+            LEFT JOIN quizzes q ON c.id = q.course_id" . Academy::courseQuizOnly('q') . "
             LEFT JOIN quiz_results qr ON q.id = qr.quiz_id AND qr.user_id = e.user_id AND qr.passed = 1
             LEFT JOIN certificates cert ON c.id = cert.course_id AND cert.user_id = e.user_id
             WHERE c.id = ? AND e.user_id = ?

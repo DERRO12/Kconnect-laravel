@@ -147,6 +147,11 @@
 .ka-watch-bar { height:8px; background:#e2e8f0; border-radius:20px; overflow:hidden; }
 .ka-watch-fill { height:100%; background:linear-gradient(90deg,#009ada,#76bc21); border-radius:20px; transition:width .4s ease; }
 .ka-watch.done { border-color:#76bc21; background:#f3fae9; }
+.ka-lesson-quiz { background:#fff; border:1px solid var(--kiboko-border,#e2e8f0); border-left:4px solid #f5a623; border-radius:14px; padding:.8rem 1rem; display:flex; flex-wrap:wrap; gap:.75rem; align-items:center; justify-content:space-between; }
+.ka-lesson-quiz.passed { border-left-color:#76bc21; background:#f3fae9; }
+.ka-lesson-quiz .ka-lq-icon { width:40px; height:40px; border-radius:50%; background:#fff4e0; color:#f5a623; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0; }
+.ka-lesson-quiz.passed .ka-lq-icon { background:#e6f4d4; color:#5a9a14; }
+@media (max-width: 575.98px) { .ka-lesson-quiz .btn { width:100%; } }
 .ka-lesson-tabs .nav-tabs { flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; }
 .ka-lesson-tabs .nav-tabs::-webkit-scrollbar { display:none; }
 .ka-lesson-tabs .nav-link { white-space:nowrap; background:none; border-top:0; border-left:0; border-right:0; }
@@ -273,6 +278,36 @@
                     <strong id="kaWatchPct"></strong>
                 </div>
                 <div class="ka-watch-bar"><div class="ka-watch-fill" id="kaWatchFill" style="width:0%"></div></div>
+            </div>
+            <?php endif; ?>
+
+            <!-- Lesson quiz: opens once the video is watched; passing it completes the lesson -->
+            <?php if ($lesson_quiz): ?>
+            <div class="ka-lesson-quiz mb-3 <?php echo $lesson_quiz_passed ? 'passed' : ''; ?>" id="kaLessonQuiz">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="ka-lq-icon"><i class="bi <?php echo $lesson_quiz_passed ? 'bi-patch-check-fill' : 'bi-patch-question'; ?>"></i></div>
+                    <div>
+                        <div class="fw-semibold"><?php echo htmlspecialchars($lesson_quiz['title']); ?></div>
+                        <div class="small text-muted" id="kaLessonQuizText">
+                            <?php echo (int) $lesson_quiz['question_count']; ?> question<?php echo $lesson_quiz['question_count'] == 1 ? '' : 's'; ?> · pass mark <?php echo (int) $lesson_quiz['passing_score']; ?>%
+                            <?php if ($lesson_quiz_passed): ?>
+                                · <span class="text-success fw-semibold">Passed (<?php echo (int) $lesson_quiz_best; ?>%)</span>
+                            <?php elseif ($lesson_quiz_attempts): ?>
+                                · best so far <?php echo (int) $lesson_quiz_best; ?>%
+                            <?php elseif (!$lesson_video_done): ?>
+                                · opens when you finish the video
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+                <?php if ($lesson_quiz_passed): ?>
+                    <span class="badge bg-success p-2"><i class="bi bi-check-circle-fill"></i> Quiz passed</span>
+                <?php else: ?>
+                    <a href="quiz?lesson_id=<?php echo (int) $current_lesson['id']; ?>" id="kaLessonQuizBtn" onclick="return kaGoQuiz(event)"
+                       class="btn btn-warning <?php echo $lesson_video_done ? '' : 'disabled'; ?>" <?php echo $lesson_video_done ? '' : 'aria-disabled="true" title="Watch the whole video first"'; ?>>
+                        <i class="bi bi-patch-question"></i> <?php echo $lesson_quiz_attempts ? 'Retake Lesson Quiz' : 'Take Lesson Quiz'; ?>
+                    </a>
+                <?php endif; ?>
             </div>
             <?php endif; ?>
 
@@ -451,9 +486,13 @@
                 
                 <div class="d-flex gap-2">
                     <?php if (!$current_lesson['completed']): ?>
+                        <?php if ($lesson_quiz && !$lesson_quiz_passed): ?>
+                        <span class="badge bg-warning text-dark p-3"><i class="bi bi-patch-question"></i> Pass the lesson quiz to complete</span>
+                        <?php else: ?>
                         <button class="btn btn-success" onclick="markLessonComplete()" id="completeBtn" <?php echo in_array($video['kind'], ['youtube', 'file'], true) || $ka_wait_seconds > 0 ? 'disabled title="Watch the whole video first"' : ''; ?>>
                             <i class="bi bi-check-circle"></i> Mark as Complete
                         </button>
+                        <?php endif; ?>
                     <?php else: ?>
                         <span class="badge bg-success p-3">
                             <i class="bi bi-check-circle-fill"></i> Lesson Completed
@@ -515,6 +554,9 @@
                                                     <i class="bi bi-clock"></i> <?php echo $lesson['duration']; ?> min
                                                 </span>
                                             <?php endif; ?>
+                                            <?php if (in_array((int) $lesson['id'], $lesson_quiz_ids, true)): ?>
+                                                <span class="text-muted" title="This lesson has a quiz"><i class="bi bi-patch-question"></i> Quiz</span>
+                                            <?php endif; ?>
                                             <?php if ($lesson['attachments']): 
                                                 $attch = json_decode($lesson['attachments'], true); ?>
                                                 <span class="text-muted">
@@ -555,6 +597,8 @@ const KA_LESSON = <?php echo (int) $current_lesson['id']; ?>;
 const KA_CSRF = '<?php echo $csrf_token; ?>';
 const KA_KIND = '<?php echo $video['kind']; ?>';
 const KA_DONE = <?php echo $current_lesson['completed'] ? 'true' : 'false'; ?>;
+// The lesson has a quiz still to pass: it opens once the video is watched and completes the lesson.
+const KA_QUIZ = <?php echo ($lesson_quiz && !$lesson_quiz_passed) ? "'quiz?lesson_id=" . (int) $current_lesson['id'] . "'" : 'null'; ?>;
 const KA_ME = <?php echo json_encode(['name' => $user['full_name'] ?? '', 'initial' => strtoupper(substr($user['full_name'] ?? 'U', 0, 1))]); ?>;
 let kaMax = <?php echo (int) ($current_lesson['watched_duration'] ?? 0); ?>;   // furthest second watched
 let kaLen = 0;          // video length in seconds
@@ -572,7 +616,7 @@ function kaShowWatch() {
     document.getElementById('kaWatchPct').textContent = Math.floor(pct) + '%';
     const left = kaLen - kaMax;
     document.getElementById('kaWatchText').textContent = left <= kaSlack()
-        ? 'Video watched. You can complete this lesson.'
+        ? (KA_QUIZ ? 'Video watched. Now pass the lesson quiz to complete this lesson.' : 'Video watched. You can complete this lesson.')
         : 'Watch the whole video to complete this lesson (' + kaFmt(left) + ' left)';
 }
 
@@ -581,13 +625,30 @@ function kaWatchedAll() { return kaLen > 0 && kaMax >= kaLen - kaSlack(); }
 
 function kaSetButton() {
     const btn = document.getElementById('completeBtn');
-    if (!btn || KA_DONE) return;
+    if (KA_DONE) return;
     let ready = true;
     if (KA_KIND === 'youtube' || KA_KIND === 'file') ready = kaWatchedAll();
     else if (['vimeo', 'drive', 'link'].includes(KA_KIND)) ready = kaWait <= 0;
-    btn.disabled = !ready;
-    btn.title = ready ? '' : 'Watch the whole video first';
-    if (ready) document.getElementById('kaWatch')?.classList.add('done');
+    if (btn) { btn.disabled = !ready; btn.title = ready ? '' : 'Watch the whole video first'; }
+    if (ready) {
+        document.getElementById('kaWatch')?.classList.add('done');
+        const qb = document.getElementById('kaLessonQuizBtn');
+        if (qb) { qb.classList.remove('disabled'); qb.removeAttribute('aria-disabled'); qb.title = ''; }
+    }
+}
+
+// Open the lesson quiz once the watch time has been saved (the quiz page checks it).
+function kaGoQuiz(e) {
+    if (e) e.preventDefault();
+    const qb = document.getElementById('kaLessonQuizBtn');
+    if (qb && qb.classList.contains('disabled')) return false;
+    const go = () => { window.location.href = KA_QUIZ || ('quiz?lesson_id=' + KA_LESSON); };
+    if (KA_DONE || kaMax <= 0) { go(); return false; }
+    fetch('api/update-progress', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lesson_id: KA_LESSON, watched_seconds: Math.floor(kaMax), video_length: Math.round(kaLen), csrf_token: KA_CSRF })
+    }).catch(() => {}).finally(go);
+    return false;
 }
 
 function updateProgress(force) {
@@ -621,7 +682,11 @@ function kaReachedEnd() {
     kaShowWatch();
     updateProgress(true);
     kaSetButton();
-    if (!kaFinished) { kaFinished = true; setTimeout(markLessonComplete, 600); }
+    if (!kaFinished) {
+        kaFinished = true;
+        if (KA_QUIZ) setTimeout(kaQuizPrompt, 600);
+        else setTimeout(markLessonComplete, 600);
+    }
 }
 
 <?php if ($video['kind'] === 'youtube'): ?>
@@ -706,7 +771,16 @@ kaSetButton();
 
 window.addEventListener('pagehide', () => { if (kaMax > 0) updateProgress(true); });
 
+function kaQuizPrompt() {
+    Swal.fire({
+        icon: 'success', title: 'Video watched!',
+        text: 'Pass the lesson quiz to complete this lesson.',
+        showCancelButton: true, confirmButtonText: 'Take the quiz now', cancelButtonText: 'Later'
+    }).then(r => { if (r.isConfirmed) kaGoQuiz(); });
+}
+
 function markLessonComplete() {
+    if (KA_QUIZ) { kaQuizPrompt(); return; }
     const completeBtn = document.getElementById('completeBtn');
     if (completeBtn) {
         completeBtn.disabled = true;
@@ -733,6 +807,10 @@ function markLessonComplete() {
                     window.location.reload();
                 <?php endif; ?>
             });
+        } else if (data.needs_quiz) {
+            if (completeBtn) { completeBtn.innerHTML = '<i class="bi bi-check-circle"></i> Mark as Complete'; kaSetButton(); }
+            Swal.fire({ icon: 'info', title: 'One more step', text: data.message, showCancelButton: true, confirmButtonText: 'Take the quiz now', cancelButtonText: 'Later' })
+                .then(r => { if (r.isConfirmed) window.location.href = data.quiz_url; });
         } else {
             kaFinished = false;
             Swal.fire({ icon: data.needs_video ? 'info' : 'error', title: data.needs_video ? 'Not finished yet' : 'Error', text: data.message || 'Failed to mark lesson as complete' });

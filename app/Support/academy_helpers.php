@@ -250,13 +250,13 @@ if (! function_exists('ka_course_quiz_passed')) {
     function ka_course_quiz_passed($userId, $courseId): bool
     {
         $ka = Academy::db();
-        if (! $ka->selectOne("SELECT q.id FROM quizzes q WHERE q.course_id = ? AND q.status = 'active'
+        if (! $ka->selectOne("SELECT q.id FROM quizzes q WHERE q.course_id = ? AND q.status = 'active'".Academy::courseQuizOnly('q')."
             AND EXISTS (SELECT 1 FROM quiz_questions qq WHERE qq.quiz_id = q.id) LIMIT 1", [$courseId])) {
             return true;
         }
 
         return (bool) $ka->selectOne('SELECT qr.id FROM quiz_results qr JOIN quizzes q ON q.id = qr.quiz_id
-            WHERE qr.user_id = ? AND q.course_id = ? AND qr.passed = 1 LIMIT 1', [$userId, $courseId]);
+            WHERE qr.user_id = ? AND q.course_id = ? AND qr.passed = 1'.Academy::courseQuizOnly('q').' LIMIT 1', [$userId, $courseId]);
     }
 }
 

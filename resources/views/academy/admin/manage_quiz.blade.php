@@ -10,12 +10,18 @@
                 <nav class="navbar navbar-expand navbar-light bg-white mb-4 rounded-bottom shadow-sm">
                     <div class="container-fluid">
                         <div>
-                            <h5 class="mb-0">Manage Quiz: <?php echo $course['title']; ?></h5>
+                            <h5 class="mb-0">Manage Quiz: <?php echo htmlspecialchars($course['title']); ?><?php if ($lesson): ?> <span class="text-secondary">· Lesson: <?php echo htmlspecialchars($lesson['title']); ?></span><?php endif; ?></h5>
                             <small class="text-secondary"><?php echo count($questions); ?> questions</small>
                         </div>
+                        <?php if ($lesson): ?>
+                        <a href="manage_lessons?course_id=<?php echo (int) $course['id']; ?>" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Back to Lessons
+                        </a>
+                        <?php else: ?>
                         <a href="manage_courses" class="btn btn-outline-secondary">
                             <i class="bi bi-arrow-left"></i> Back to Courses
                         </a>
+                        <?php endif; ?>
                     </div>
                 </nav>
 
