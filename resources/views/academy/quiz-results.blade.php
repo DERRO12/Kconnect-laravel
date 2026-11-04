@@ -329,13 +329,13 @@
     <!-- Action Buttons -->
     <div class="action-buttons no-print">
         <?php if (!$result['passed']): ?>
-            <a href="quiz?course_id=<?php echo $result['course_id']; ?>" class="btn btn-warning">
+            <a href="<?php echo !empty($result['lesson_id']) ? 'quiz?lesson_id=' . (int) $result['lesson_id'] : 'quiz?course_id=' . (int) $result['course_id']; ?>" class="btn btn-warning">
                 <i class="bi bi-arrow-repeat"></i> Try Again
             </a>
         <?php endif; ?>
         
-        <a href="course-player?id=<?php echo $result['course_id']; ?>" class="btn btn-primary">
-            <i class="bi bi-arrow-left"></i> Back to Course
+        <a href="course-player?id=<?php echo (int) $result['course_id']; ?><?php echo !empty($result['lesson_id']) ? '&lesson=' . (int) $result['lesson_id'] : ''; ?>" class="btn btn-primary">
+            <i class="bi bi-arrow-left"></i> <?php echo !empty($result['lesson_id']) ? 'Back to Lesson' : 'Back to Course'; ?>
         </a>
         
         <button class="btn btn-outline-secondary" onclick="window.print()">

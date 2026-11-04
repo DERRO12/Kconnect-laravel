@@ -1,4 +1,0 @@
-# Uploaded files are served as files, never run as scripts
-<FilesMatch "\.(php\d?|phtml|phar)$">
-    Require all denied
-</FilesMatch>

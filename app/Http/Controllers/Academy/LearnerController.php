@@ -84,7 +84,7 @@ class LearnerController extends Controller
             JOIN courses c ON e.course_id = c.id
             LEFT JOIN lessons l ON c.id = l.course_id
             LEFT JOIN lesson_progress lp ON l.id = lp.lesson_id AND lp.user_id = e.user_id AND lp.completed = 1
-            LEFT JOIN quizzes q ON c.id = q.course_id
+            LEFT JOIN quizzes q ON c.id = q.course_id" . Academy::courseQuizOnly('q') . "
             LEFT JOIN quiz_results qr ON q.id = qr.quiz_id AND qr.user_id = e.user_id
             WHERE e.user_id = ?
             GROUP BY c.id, e.id
@@ -433,6 +433,59 @@ class LearnerController extends Controller
 
         // YouTube, uploaded file, or an outside link (Vimeo, Google Drive, .mp4 address...)
         $video = Academy::video($current_lesson['video_url'], $current_lesson['video_type']);
+        // When the lesson was opened: outside videos (Vimeo, Drive...) cannot report playback,
+        // so for them "watched" means the page stayed open for the lesson's length.
+        if (! session()->has('ka_open.'.$current_lesson['id'])) {
+            session(['ka_open.'.$current_lesson['id'] => time()]);
+        }
+        // Watch-time clock restarts with each visit (api/update-progress checks against it).
+        $watchKey = 'ka_watch.'.$current_lesson['id'];
+        session([$watchKey => ['t' => time(), 'len' => (int) (session($watchKey)['len'] ?? 0)]]);
+        $ka_wait_seconds = 0;
+        if (in_array($video['kind'], ['vimeo', 'drive', 'link'], true) && (int) $current_lesson['duration'] > 0 && ! $current_lesson['completed']) {
+            $ka_wait_seconds = max(0, (int) floor($current_lesson['duration'] * 60 * 0.9) - (time() - (int) session('ka_open.'.$current_lesson['id'])));
+        }
+
+        // The lesson's own quiz (if any): it opens once the video is watched, and passing it completes the lesson.
+        $lesson_quiz = Academy::lessonQuiz((int) $current_lesson['id']);
+        $lesson_quiz_passed = false;
+        $lesson_quiz_best = null;
+        $lesson_quiz_attempts = 0;
+        $lesson_video_done = true;
+        if ($lesson_quiz) {
+            $row = Academy::db()->selectOne('SELECT COUNT(*) AS n, MAX(percentage) AS best, MAX(passed) AS passed FROM quiz_results WHERE user_id = ? AND quiz_id = ?', [$user_id, $lesson_quiz['id']]);
+            $lesson_quiz_attempts = (int) ($row['n'] ?? 0);
+            $lesson_quiz_best = $row['best'] !== null ? round((float) $row['best']) : null;
+            $lesson_quiz_passed = (bool) ($row['passed'] ?? false);
+            $lesson_video_done = Academy::videoNotFinished((int) $user_id, $current_lesson) === null;
+        }
+        $lesson_quiz_ids = Academy::hasLessonQuizzes()
+            ? array_map('intval', array_column(Academy::db()->select("SELECT DISTINCT lesson_id FROM quizzes WHERE course_id = ? AND lesson_id IS NOT NULL AND status = 'active'", [$course_id]), 'lesson_id'))
+            : [];
+
+        // Notes, discussion and resources shown in tabs under the video
+        $stmt = $pdo->prepare('SELECT notes, updated_at FROM lesson_notes WHERE user_id = ? AND lesson_id = ?');
+        $stmt->execute([$user_id, $current_lesson['id']]);
+        $lesson_note = $stmt->fetch() ?: ['notes' => '', 'updated_at' => null];
+        $stmt = $pdo->prepare("
+            SELECT d.id, d.user_id, d.parent_id, d.comment, d.likes, d.created_at, u.full_name, u.profile_image,
+                   EXISTS (SELECT 1 FROM discussion_likes dl WHERE dl.discussion_id = d.id AND dl.user_id = ?) AS liked
+            FROM discussions d JOIN users u ON u.id = d.user_id
+            WHERE d.lesson_id = ? ORDER BY d.created_at ASC
+        ");
+        $stmt->execute([$user_id, $current_lesson['id']]);
+        $lesson_threads = [];
+        $lesson_replies = [];
+        foreach ($stmt->fetchAll() as $row) {
+            if ($row['parent_id']) {
+                $lesson_replies[$row['parent_id']][] = $row;
+            } else {
+                $lesson_threads[] = $row;
+            }
+        }
+        $lesson_threads = array_reverse($lesson_threads); // newest question first, replies oldest first
+        $lesson_comment_count = $stmt->rowCount();
+        $lesson_attachments = json_decode((string) $current_lesson['attachments'], true) ?: [];
 
         // Update last accessed
         $stmt = $pdo->prepare("UPDATE enrollments SET last_accessed = NOW() WHERE user_id = ? AND course_id = ?");
@@ -444,7 +497,7 @@ class LearnerController extends Controller
         $next_lesson = $current_index < count($lessons) - 1 ? $lessons[$current_index + 1] : null;
 
         // Get quiz for this course
-        $stmt = $pdo->prepare("SELECT * FROM quizzes WHERE course_id = ?");
+        $stmt = $pdo->prepare("SELECT * FROM quizzes WHERE course_id = ?" . Academy::courseQuizOnly() . " ORDER BY status = 'active' DESC, id LIMIT 1");
         $stmt->execute([$course_id]);
         $quiz = $stmt->fetch();
 
@@ -470,9 +523,10 @@ class LearnerController extends Controller
         // Check if course is completed
         $course_completed = ($completed_lessons == $total_lessons && $total_lessons > 0);
 
-        // Get certificate if exists
+        // Get certificate if exists (any certificate already issued is always shown)
+        $quiz_ok = $quiz_passed || ka_course_quiz_passed($user_id, $course_id);
         $certificate = null;
-        if ($course_completed && $quiz_passed) {
+        {
             $stmt = $pdo->prepare("SELECT * FROM certificates WHERE user_id = ? AND course_id = ?");
             $stmt->execute([$user_id, $course_id]);
             $certificate = $stmt->fetch();
@@ -696,7 +750,7 @@ class LearnerController extends Controller
             JOIN courses c ON e.course_id = c.id
             LEFT JOIN lessons l ON c.id = l.course_id
             LEFT JOIN lesson_progress lp ON l.id = lp.lesson_id AND lp.user_id = e.user_id AND lp.completed = 1
-            LEFT JOIN quizzes q ON c.id = q.course_id
+            LEFT JOIN quizzes q ON c.id = q.course_id" . Academy::courseQuizOnly('q') . "
             LEFT JOIN quiz_results qr ON q.id = qr.quiz_id AND qr.user_id = e.user_id
             LEFT JOIN certificates cert ON c.id = cert.course_id AND cert.user_id = e.user_id
             WHERE e.user_id = ?
@@ -959,20 +1013,37 @@ class LearnerController extends Controller
 
 
         $course_id = isset($_GET['course_id']) ? (int)$_GET['course_id'] : 0;
+        $lesson_id = isset($_GET['lesson_id']) ? (int)$_GET['lesson_id'] : 0;
+        $lesson = null;
 
-        if (!$course_id) {
-            return ka_redirect('/my-courses.php', 'Invalid course ID', 'danger');
+        if ($lesson_id) {
+            // A lesson quiz: it belongs to one lesson and opens once that lesson's video is watched.
+            $stmt = $pdo->prepare("SELECT id, course_id, title, video_url, video_type, duration FROM lessons WHERE id = ?");
+            $stmt->execute([$lesson_id]);
+            $lesson = $stmt->fetch();
+            $lessonQuiz = $lesson ? Academy::lessonQuiz($lesson_id) : null;
+            if (!$lessonQuiz) {
+                return ka_redirect('/my-courses.php', 'Quiz not found or not active', 'danger');
+            }
+            $course_id = (int) $lesson['course_id'];
+            $stmt = $pdo->prepare("SELECT q.*, c.title as course_title, c.id as course_id FROM quizzes q JOIN courses c ON q.course_id = c.id WHERE q.id = ?");
+            $stmt->execute([$lessonQuiz['id']]);
+            $quiz = $stmt->fetch();
+        } else {
+            if (!$course_id) {
+                return ka_redirect('/my-courses.php', 'Invalid course ID', 'danger');
+            }
+
+            // Get quiz details (the course final quiz, not a lesson quiz)
+            $stmt = $pdo->prepare("
+                SELECT q.*, c.title as course_title, c.id as course_id
+                FROM quizzes q
+                JOIN courses c ON q.course_id = c.id
+                WHERE q.course_id = ? AND q.status = 'active'" . Academy::courseQuizOnly('q') . "
+            ");
+            $stmt->execute([$course_id]);
+            $quiz = $stmt->fetch();
         }
-
-        // Get quiz details
-        $stmt = $pdo->prepare("
-            SELECT q.*, c.title as course_title, c.id as course_id
-            FROM quizzes q
-            JOIN courses c ON q.course_id = c.id
-            WHERE q.course_id = ? AND q.status = 'active'
-        ");
-        $stmt->execute([$course_id]);
-        $quiz = $stmt->fetch();
 
         if (!$quiz) {
             return ka_redirect('/my-courses.php', 'Quiz not found or not active', 'danger');
@@ -983,6 +1054,17 @@ class LearnerController extends Controller
         $stmt->execute([$user_id, $course_id]);
         if (!$stmt->fetch()) {
             return ka_redirect('/browse-courses.php', 'You must be enrolled in this course to take the quiz', 'danger');
+        }
+
+        $back_url = 'course-player?id=' . $course_id . ($lesson ? '&lesson=' . (int) $lesson['id'] : '');
+        if ($lesson) {
+            // The lesson quiz opens once the lesson's video has been watched to the end.
+            if ($blocked = Academy::videoNotFinished((int) $user_id, $lesson)) {
+                return ka_redirect('/course-player.php?id=' . $course_id . '&lesson=' . (int) $lesson['id'], 'Watch the whole lesson video before taking its quiz.', 'warning');
+            }
+        } elseif (ka_calculate_course_progress($pdo, $user_id, $course_id) < 100) {
+            // The course quiz opens once every lesson is completed (each video watched to the end).
+            return ka_redirect('/course-player.php?id=' . $course_id, 'Finish every lesson (watch each video to the end) before taking the quiz.', 'warning');
         }
 
         // Get quiz questions
@@ -1094,8 +1176,21 @@ class LearnerController extends Controller
                         'passed' => $passed
                     ]);
 
+                    // A passed lesson quiz completes its lesson (the video was already watched).
+                    if ($passed && $lesson) {
+                        $stmt = $pdo->prepare("
+                            INSERT INTO lesson_progress (user_id, lesson_id, course_id, completed, completed_at, last_accessed)
+                            VALUES (?, ?, ?, 1, NOW(), NOW())
+                            ON DUPLICATE KEY UPDATE completed = 1, completed_at = COALESCE(completed_at, NOW()), last_accessed = NOW()
+                        ");
+                        $stmt->execute([$user_id, $lesson['id'], $course_id]);
+                        if (ka_calculate_course_progress($pdo, $user_id, $course_id) >= 100) {
+                            Academy::requestCertificate((int) $user_id, (int) $course_id);
+                        }
+                    }
+
                     // If passed, check if course is completed and generate certificate
-                    if ($passed) {
+                    if ($passed && !$lesson) {
                         // Check if all lessons are completed
                         $stmt = $pdo->prepare("
                             SELECT COUNT(*) as total,
@@ -1106,6 +1201,9 @@ class LearnerController extends Controller
                         ");
                         $stmt->execute([$user_id, $course_id]);
                         $progress = $stmt->fetch();
+
+                        // Lessons done + quiz passed: the course is now completed.
+                        ka_calculate_course_progress($pdo, $user_id, $course_id);
 
                         if ($progress['total'] > 0 && $progress['completed'] == $progress['total']) {
                             // Course finished: the certificate waits for an admin's approval
@@ -1143,7 +1241,7 @@ class LearnerController extends Controller
 
         // Get quiz result details
         $stmt = $pdo->prepare("
-            SELECT qr.*, q.title as quiz_title, q.passing_score, q.show_answers,
+            SELECT qr.*, q.title as quiz_title, q.passing_score, q.show_answers," . (Academy::hasLessonQuizzes() ? ' q.lesson_id,' : '') . "
                    c.id as course_id, c.title as course_title
             FROM quiz_results qr
             JOIN quizzes q ON qr.quiz_id = q.id
@@ -1725,7 +1823,7 @@ class LearnerController extends Controller
             JOIN enrollments e ON c.id = e.course_id AND e.user_id = ?
             LEFT JOIN lessons l ON c.id = l.course_id
             LEFT JOIN lesson_progress lp ON l.id = lp.lesson_id AND lp.user_id = e.user_id AND lp.completed = 1
-            LEFT JOIN quizzes q ON c.id = q.course_id
+            LEFT JOIN quizzes q ON c.id = q.course_id" . Academy::courseQuizOnly('q') . "
             LEFT JOIN quiz_results qr ON q.id = qr.quiz_id AND qr.user_id = e.user_id AND qr.passed = 1
             LEFT JOIN certificates cert ON c.id = cert.course_id AND cert.user_id = e.user_id
             WHERE c.id = ? AND e.user_id = ?
@@ -1738,15 +1836,15 @@ class LearnerController extends Controller
             return ka_redirect('/my-courses.php', 'Course not found or you are not enrolled', 'danger');
         }
 
-        // Check if course is completed
+        // Same rule as everywhere: all lessons completed + the quiz passed when the course has one.
         $lessons_completed = ($data['total_lessons'] > 0 && $data['completed_lessons'] == $data['total_lessons']);
-        $course_completed = $lessons_completed && $data['quiz_passed'];
+        $course_completed = !$data['certificate_id'] ? ka_course_finished($user_id, $course_id) : true;
 
         if (!$course_completed) {
             $message = '';
             if (!$lessons_completed) {
                 $message = 'You need to complete all lessons first.';
-            } elseif (!$data['quiz_passed']) {
+            } elseif (!ka_course_quiz_passed($user_id, $course_id)) {
                 $message = 'You need to pass the quiz first.';
             }
 
@@ -1761,49 +1859,9 @@ class LearnerController extends Controller
 
         // Check if certificate already exists
         if (!$data['certificate_id']) {
-            // Generate new certificate number
-            $certificate_number = 'CERT-' . date('Y') . '-' . str_pad(mt_rand(1, 99999), 5, '0', STR_PAD_LEFT);
-            $issued_date = date('Y-m-d');
-
-            // Insert pending certificate record
-            $stmt = $pdo->prepare("
-                INSERT INTO certificates (
-                    certificate_number, user_id, course_id, quiz_result_id, 
-                    issued_date, status
-                ) VALUES (?, ?, ?, ?, ?, 'pending')
-            ");
-            $stmt->execute([
-                $certificate_number, 
-                $user_id, 
-                $course_id, 
-                $data['quiz_result_id'], 
-                $issued_date
-            ]);
-
-            $certificate_id = $pdo->lastInsertId();
-
-            // Create notification for all admins
-            $stmt = $pdo->prepare("SELECT id FROM users WHERE role = 'admin'");
-            $stmt->execute();
-            $admins = $stmt->fetchAll();
-
-            foreach ($admins as $admin) {
-                $notification_message = "New certificate pending approval for {$user['full_name']} - Course: {$data['title']}";
-                $notification_link = "admin/approve-certificate.php?id={$certificate_id}";
-
-                $stmt = $pdo->prepare("
-                    INSERT INTO notifications (user_id, title, message, type, link, created_at) 
-                    VALUES (?, 'Certificate Approval Required', ?, 'warning', ?, NOW())
-                ");
-                $stmt->execute([$admin['id'], $notification_message, $notification_link]);
-            }
-
-            // Log activity
-            ka_log_activity($pdo, $user_id, 'requested_certificate', [
-                'course_id' => $course_id,
-                'certificate_number' => $certificate_number,
-                'status' => 'pending'
-            ]);
+            // One place makes certificates: number, admin notifications, e-mails.
+            Academy::requestCertificate($user_id, $course_id, $data['quiz_result_id'] ? (int) $data['quiz_result_id'] : null);
+            ka_log_activity($pdo, $user_id, 'requested_certificate', ['course_id' => $course_id, 'status' => 'pending']);
 
             // Show pending message
             ka_flash('Your certificate has been submitted for approval. You will be notified once approved.', 'info');

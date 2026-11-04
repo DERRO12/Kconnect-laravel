@@ -226,7 +226,7 @@
                                 $thumbnail_exists = !empty($enrollment['thumbnail']) && file_exists($thumbnail_path);
                                 ?>
                                 <?php if ($thumbnail_exists): ?>
-                                    <img src="<?php echo $thumbnail_path; ?>" 
+                                    <img src="<?php echo ka_thumb($thumbnail_path, 640); ?>" decoding="async" 
                                          class="img-fluid rounded-start h-100" 
                                          style="object-fit: cover;"
                                          alt="<?php echo htmlspecialchars($enrollment['title']); ?>"

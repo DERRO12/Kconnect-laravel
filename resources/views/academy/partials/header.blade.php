@@ -15,21 +15,27 @@
     <link rel="apple-touch-icon" href="{{ asset('favi.png') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    {{-- Admin pages only: table styling and Font Awesome icons (learner pages use neither; Select2 was never used) --}}
+    @if ($is_admin_area)
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    @endif
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url('academy/assets/css/style.css') }}?v={{ @filemtime(public_path('academy-files/assets/css/style.css')) }}">
     <link rel="stylesheet" href="{{ url('academy/assets/css/kconnect-theme.css') }}?v={{ @filemtime(public_path('academy-files/assets/css/kconnect-theme.css')) }}">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
     // Pages that do not load Bootstrap's JS themselves still need it for the menus, dropdowns and pop-ups
-    window.addEventListener('load', function () {
+    // (as soon as the page is read, not after every image has downloaded)
+    document.addEventListener('DOMContentLoaded', function () {
         if (window.bootstrap) return;
         var s = document.createElement('script');
         s.src = 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js';
         document.head.appendChild(s);
+    });
+    window.addEventListener('load', function () {
+        if (!window.AOS) document.documentElement.classList.add('ka-no-aos');
     });
     </script>
     @foreach ($extra_css ?? [] as $css)

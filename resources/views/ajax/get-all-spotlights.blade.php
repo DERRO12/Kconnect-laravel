@@ -4,7 +4,7 @@
     @foreach ($spotlights as $spotlight)
     @php
         $isTeam = $spotlight['spotlight_type'] == 'team';
-        $rating = floatval($spotlight['rating']);
+        $rating = max(0, min(5, floatval($spotlight['rating'])));
         $fullStars = floor($rating);
         $halfStar = ($rating - $fullStars) >= 0.5;
         $emptyStars = 5 - $fullStars - ($halfStar ? 1 : 0);

@@ -201,6 +201,7 @@ class Academy
             ]);
             $user = $ka->selectOne('SELECT * FROM users WHERE id = ?', [$ka->getPdo()->lastInsertId()]);
             self::log($user['id'], 'account_linked', ['employee_id' => $employee['id']]);
+            AcademyMailer::welcome($user);
         } elseif ($user['status'] === 'pending' || $user['full_name'] !== $employee['full_name']) {
             // Old self-registrations waited for approval: an active K-Connect employee needs none.
             // 'inactive' is kept: that is an admin switching off K-Academy for this person.
@@ -293,6 +294,88 @@ class Academy
     }
 
     /**
+     * Why the learner cannot complete this lesson yet, or null when they can.
+     * YouTube and uploaded videos: watched (without skipping) to within a few seconds of the end.
+     * Outside videos (Vimeo, Drive, links) cannot report playback: the lesson page has to have been
+     * open for the lesson's length. Lessons without a video can be completed at any time.
+     */
+    public static function videoNotFinished(int $userId, array $lesson): ?string
+    {
+        $video = self::video($lesson['video_url'], $lesson['video_type']);
+        $minutes = (int) ($lesson['duration'] ?? 0);
+
+        if (in_array($video['kind'], ['youtube', 'file'], true)) {
+            $row = self::db()->selectOne('SELECT watched_duration, completed FROM lesson_progress WHERE user_id = ? AND lesson_id = ?', [$userId, $lesson['id']]);
+            if ($row && (int) $row['completed'] === 1) {
+                return null;
+            }
+            $watched = (int) ($row['watched_duration'] ?? 0);
+            $length = (int) (session('ka_watch.'.$lesson['id'])['len'] ?? 0);
+            if ($length <= 0) {
+                $length = $minutes * 60;
+            }
+            if ($length <= 0) {
+                return $watched > 0 ? null : 'Please play the video to the end first.';
+            }
+            if ($watched < $length - max(3, (int) floor($length * 0.02))) {
+                $left = $length - $watched;
+
+                return 'Please watch the whole video first ('.($left >= 60 ? ceil($left / 60).' min' : $left.' sec').' left).';
+            }
+
+            return null;
+        }
+
+        if (in_array($video['kind'], ['vimeo', 'drive', 'link'], true) && $minutes > 0) {
+            $opened = (int) session('ka_open.'.$lesson['id'], time());
+            $need = (int) floor($minutes * 60 * 0.9) - (time() - $opened);
+            if ($need > 0) {
+                return 'Please watch the whole video first ('.($need >= 60 ? ceil($need / 60).' min' : $need.' sec').' left).';
+            }
+        }
+
+        return null;
+    }
+
+    /** Lesson quizzes are on once the quizzes.lesson_id column exists (database/sql/academy_lesson_quizzes.sql). */
+    public static function hasLessonQuizzes(): bool
+    {
+        static $on = null;
+        if ($on === null) {
+            try {
+                $on = (bool) self::db()->selectOne("SHOW COLUMNS FROM quizzes LIKE 'lesson_id'");
+            } catch (\Throwable $e) {
+                $on = false;
+            }
+        }
+
+        return $on;
+    }
+
+    /** SQL to keep a quizzes query to course final quizzes only (not lesson quizzes). */
+    public static function courseQuizOnly(string $alias = ''): string
+    {
+        return self::hasLessonQuizzes() ? ' AND '.($alias !== '' ? $alias.'.' : '').'lesson_id IS NULL' : '';
+    }
+
+    /** The active quiz (with at least one question) of a lesson, or null. */
+    public static function lessonQuiz(int $lessonId): ?array
+    {
+        if (! self::hasLessonQuizzes() || $lessonId <= 0) {
+            return null;
+        }
+
+        return self::db()->selectOne("SELECT q.*, (SELECT COUNT(*) FROM quiz_questions qq WHERE qq.quiz_id = q.id) AS question_count
+            FROM quizzes q WHERE q.lesson_id = ? AND q.status = 'active'
+            AND EXISTS (SELECT 1 FROM quiz_questions qq WHERE qq.quiz_id = q.id) LIMIT 1", [$lessonId]) ?: null;
+    }
+
+    public static function quizPassed(int $userId, int $quizId): bool
+    {
+        return (bool) self::db()->selectOne('SELECT id FROM quiz_results WHERE user_id = ? AND quiz_id = ? AND passed = 1 LIMIT 1', [$userId, $quizId]);
+    }
+
+    /**
      * A learner finished every lesson and passed the quiz: record a pending certificate (once)
      * and tell the K-Academy admins, as generate-certificate did. Returns the certificate id.
      */
@@ -301,7 +384,14 @@ class Academy
         $ka = self::db();
         $existing = $ka->selectOne('SELECT id FROM certificates WHERE user_id = ? AND course_id = ?', [$userId, $courseId]);
         if ($existing) {
-            return (int) $existing['id'];
+            return (int) $existing['id'];   // certificates already issued are never changed here
+        }
+        if (! ka_course_finished($userId, $courseId)) {
+            return 0;                       // not every requirement met yet: no certificate
+        }
+        if ($quizResultId === null) {
+            $quizResultId = $ka->selectOne('SELECT qr.id FROM quiz_results qr JOIN quizzes q ON q.id = qr.quiz_id
+                WHERE qr.user_id = ? AND q.course_id = ? AND qr.passed = 1'.self::courseQuizOnly('q').' ORDER BY qr.percentage DESC, qr.id DESC LIMIT 1', [$userId, $courseId])['id'] ?? null;
         }
         $number = ka_generate_certificate_number();
         $ka->insert("INSERT INTO certificates (certificate_number, user_id, course_id, quiz_result_id, issued_date, status) VALUES (?, ?, ?, ?, CURDATE(), 'pending')",
@@ -313,6 +403,7 @@ class Academy
         foreach ($ka->select("SELECT id FROM users WHERE role = 'admin'") as $admin) {
             self::notify((int) $admin['id'], 'Certificate Approval Required', "New certificate pending approval for {$who} - Course: {$course}", 'warning', "admin/approve-certificate.php?id={$id}");
         }
+        AcademyMailer::certificateRequested($id);
         self::log($userId, 'requested_certificate', ['course_id' => $courseId, 'certificate_number' => $number, 'status' => 'pending']);
 
         return $id;

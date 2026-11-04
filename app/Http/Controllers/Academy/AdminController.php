@@ -192,6 +192,9 @@ class AdminController extends Controller
                     if ($stmt->execute([$title, $slug, $description, $thumbnail, $category, $category_type, $level, $duration, $status, $user_id])) {
                         $courseId = $pdo->lastInsertId();
                         ka_log_activity($pdo, $user_id, 'created_course', ['course_id' => $courseId, 'title' => $title]);
+                        if ($status === 'published') {
+                            \App\Support\AcademyMailer::coursePublished((int) $courseId);
+                        }
                         return ka_redirect('/admin/manage_lessons.php?course_id=' . $courseId, 'Course created successfully. Now add lessons.', 'success');
                     } else {
                         $error = 'Failed to create course';
@@ -294,6 +297,9 @@ class AdminController extends Controller
 
                         if ($stmt->execute([$title, $slug, $description, $thumbnail, $category, $level, $duration, $status, $course_id])) {
                             ka_log_activity($pdo, $user_id, 'updated_course', ['course_id' => $course_id, 'title' => $title]);
+                            if ($status === 'published') {
+                                \App\Support\AcademyMailer::coursePublished((int) $course_id);
+                            }
 
                             // Update session data
                             $course['title'] = $title;
@@ -388,6 +394,16 @@ class AdminController extends Controller
         $lessons = $stmt->fetchAll();
 
         $csrf_token = csrf_token();
+
+        // Lessons that have their own quiz (and how many questions), for the Quiz button on each lesson
+        $lesson_quizzes = [];
+        if (Academy::hasLessonQuizzes()) {
+            foreach (Academy::db()->select('SELECT q.lesson_id, q.status, (SELECT COUNT(*) FROM quiz_questions qq WHERE qq.quiz_id = q.id) AS questions
+                FROM quizzes q WHERE q.course_id = ? AND q.lesson_id IS NOT NULL', [$course_id]) as $row) {
+                $lesson_quizzes[(int) $row['lesson_id']] = $row;
+            }
+        }
+        $lesson_quizzes_on = Academy::hasLessonQuizzes();
 
         return view('academy.admin.manage_lessons', get_defined_vars());
     }
@@ -605,6 +621,9 @@ class AdminController extends Controller
                 'title' => $title
             ]);
 
+            // First lesson of an already published course: announce it (once).
+            \App\Support\AcademyMailer::coursePublished((int) $course_id);
+
             return ka_redirect('/admin/manage_lessons.php?course_id=' . $course_id, 'Lesson added successfully', 'success');
         } else {
             return ka_redirect('/admin/manage_lessons.php?course_id=' . $course_id, 'Failed to add lesson', 'danger');
@@ -696,6 +715,9 @@ class AdminController extends Controller
             $added++;
         }
 
+        if ($added) {
+            \App\Support\AcademyMailer::coursePublished((int) $course_id);
+        }
         $message = $added . ' lesson' . ($added === 1 ? '' : 's') . ' added from the uploaded videos.';
         if ($failed) {
             $message .= ' Not uploaded: ' . implode('; ', $failed);
@@ -936,7 +958,8 @@ class AdminController extends Controller
         // Build query
         $query = "
             SELECT q.*, 
-                   c.title as course_title,
+                   c.title as course_title," . (Academy::hasLessonQuizzes() ? "
+                   (SELECT l.title FROM lessons l WHERE l.id = q.lesson_id) as lesson_title," : "") . "
                    COUNT(DISTINCT qq.id) as question_count,
                    COUNT(DISTINCT qr.id) as attempt_count,
                    AVG(qr.percentage) as avg_score
@@ -993,6 +1016,22 @@ class AdminController extends Controller
         extract(Academy::pageVars(true, 'manage_quiz'));
 
         $course_id = isset($_GET['course_id']) ? (int)$_GET['course_id'] : 0;
+        $lesson_id = isset($_GET['lesson_id']) ? (int)$_GET['lesson_id'] : 0;
+        $lesson = null;
+
+        if ($lesson_id) {
+            // A quiz for one lesson: learners must pass it (after the video) to complete that lesson.
+            if (!Academy::hasLessonQuizzes()) {
+                return ka_redirect('/admin/manage_courses.php', 'Lesson quizzes need the one-time database update first (database/sql/academy_lesson_quizzes.sql).', 'warning');
+            }
+            $stmt = $pdo->prepare("SELECT id, course_id, title FROM lessons WHERE id = ?");
+            $stmt->execute([$lesson_id]);
+            $lesson = $stmt->fetch();
+            if (!$lesson) {
+                return ka_redirect('/admin/manage_courses.php', 'Lesson not found', 'danger');
+            }
+            $course_id = (int) $lesson['course_id'];
+        }
 
         // Get course details
         $stmt = $pdo->prepare("SELECT * FROM courses WHERE id = ?");
@@ -1003,15 +1042,25 @@ class AdminController extends Controller
             return ka_redirect('/admin/manage_courses.php', 'Course not found', 'danger');
         }
 
-        // Get or create quiz for this course
-        $stmt = $pdo->prepare("SELECT * FROM quizzes WHERE course_id = ?");
-        $stmt->execute([$course_id]);
+        // Get or create the quiz: the lesson's quiz, or the course final quiz
+        if ($lesson) {
+            $stmt = $pdo->prepare("SELECT * FROM quizzes WHERE lesson_id = ?");
+            $stmt->execute([$lesson_id]);
+        } else {
+            $stmt = $pdo->prepare("SELECT * FROM quizzes WHERE course_id = ?" . Academy::courseQuizOnly() . " ORDER BY status = 'active' DESC, id LIMIT 1");
+            $stmt->execute([$course_id]);
+        }
         $quiz = $stmt->fetch();
 
         if (!$quiz) {
             // Create default quiz
-            $stmt = $pdo->prepare("INSERT INTO quizzes (course_id, title, passing_score, attempts_allowed) VALUES (?, ?, 70, 3)");
-            $stmt->execute([$course_id, $course['title'] . ' Quiz']);
+            if ($lesson) {
+                $stmt = $pdo->prepare("INSERT INTO quizzes (course_id, lesson_id, title, passing_score, attempts_allowed) VALUES (?, ?, ?, 70, 3)");
+                $stmt->execute([$course_id, $lesson_id, $lesson['title'] . ' Quiz']);
+            } else {
+                $stmt = $pdo->prepare("INSERT INTO quizzes (course_id, title, passing_score, attempts_allowed) VALUES (?, ?, 70, 3)");
+                $stmt->execute([$course_id, $course['title'] . ' Quiz']);
+            }
             $quiz_id = $pdo->lastInsertId();
 
             // Fetch the new quiz
@@ -1957,6 +2006,7 @@ class AdminController extends Controller
                                 VALUES (?, 'Certificate Approved', ?, 'success', ?, NOW())
                             ");
                             $stmt->execute([$cert['user_id'], $notification_message, $notification_link]);
+                            \App\Support\AcademyMailer::certificateApproved((int) $cert_id);
                         }
                     }
 
@@ -2096,6 +2146,8 @@ class AdminController extends Controller
                 ");
                 $stmt->execute([$certificate['user_id'], $notification_message, $notification_link]);
 
+                \App\Support\AcademyMailer::certificateApproved((int) $certificate_id);
+
                 // Log activity
                 ka_log_activity($pdo, $user_id, 'approved_certificate', [
                     'certificate_id' => $certificate_id,
@@ -2129,6 +2181,8 @@ class AdminController extends Controller
                     VALUES (?, 'Certificate Rejected', ?, 'danger', NULL, NOW())
                 ");
                 $stmt->execute([$certificate['user_id'], $notification_message]);
+
+                \App\Support\AcademyMailer::certificateRejected((int) $certificate_id);
 
                 // Log activity
                 ka_log_activity($pdo, $user_id, 'rejected_certificate', [
@@ -2463,7 +2517,7 @@ class AdminController extends Controller
         if ($request->filled('course_id')) {
             return redirect(url('academy/admin/manage_quiz').'?course_id='.(int) $request->input('course_id'));
         }
-        $courses = Academy::db()->select('SELECT c.id, c.title, c.status, q.id AS quiz_id FROM courses c LEFT JOIN quizzes q ON q.course_id = c.id ORDER BY c.title');
+        $courses = Academy::db()->select('SELECT c.id, c.title, c.status, q.id AS quiz_id FROM courses c LEFT JOIN quizzes q ON q.course_id = c.id'.Academy::courseQuizOnly('q').' ORDER BY c.title');
 
         return view('academy.admin.add_quiz', get_defined_vars());
     }
