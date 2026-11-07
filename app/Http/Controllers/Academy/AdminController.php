@@ -1021,14 +1021,14 @@ class AdminController extends Controller
 
         if ($lesson_id) {
             // A quiz for one lesson: learners must pass it (after the video) to complete that lesson.
-            if (!Academy::hasLessonQuizzes()) {
-                return ka_redirect('/admin/manage_courses.php', 'Lesson quizzes need the one-time database update first (database/sql/academy_lesson_quizzes.sql).', 'warning');
-            }
             $stmt = $pdo->prepare("SELECT id, course_id, title FROM lessons WHERE id = ?");
             $stmt->execute([$lesson_id]);
             $lesson = $stmt->fetch();
             if (!$lesson) {
                 return ka_redirect('/admin/manage_courses.php', 'Lesson not found', 'danger');
+            }
+            if (!Academy::hasLessonQuizzes()) {
+                return ka_redirect('/admin/manage_lessons.php?course_id=' . (int) $lesson['course_id'], 'Lesson quizzes are not switched on yet: run database/sql/academy_lesson_quizzes.sql once on the K-Academy database (phpMyAdmin).', 'warning');
             }
             $course_id = (int) $lesson['course_id'];
         }
