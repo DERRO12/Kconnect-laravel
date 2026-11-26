@@ -6,7 +6,7 @@
     <title>Navigation Manager - Kiboko Intranet</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.css" rel="stylesheet">
     <style>
         /* All existing styles remain the same */
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -230,7 +230,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <script>
         // Modal instance
         let navModal;

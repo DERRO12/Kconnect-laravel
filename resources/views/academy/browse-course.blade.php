@@ -73,7 +73,7 @@
                         $thumbnail_exists = !empty($course['thumbnail']) && file_exists($thumbnail_path);
                         ?>
                         <?php if ($thumbnail_exists): ?>
-                            <img src="<?php echo $thumbnail_path; ?>" alt="<?php echo htmlspecialchars($course['title']); ?>">
+                            <img src="<?php echo ka_thumb($thumbnail_path, 640); ?>" loading="lazy" decoding="async" alt="<?php echo htmlspecialchars($course['title']); ?>">
                         <?php else: ?>
                             <img src="https://placehold.co/600x400/<?php echo str_replace('#', '', $type_color); ?>/white?text=<?php echo urlencode($course['title']); ?>" 
                                  alt="<?php echo htmlspecialchars($course['title']); ?>">

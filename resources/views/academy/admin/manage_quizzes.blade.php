@@ -334,6 +334,7 @@
                                     <i class="bi bi-book"></i> 
                                     <?php echo htmlspecialchars(substr($quiz['course_title'], 0, 30)) . (strlen($quiz['course_title']) > 30 ? '...' : ''); ?>
                                 </span>
+                                <span class="course-badge ms-1"><?php echo !empty($quiz['lesson_title']) ? '<i class="bi bi-play-circle"></i> Lesson: ' . htmlspecialchars(mb_strimwidth($quiz['lesson_title'], 0, 30, '...')) : '<i class="bi bi-flag"></i> Final quiz'; ?></span>
                             </div>
                             <div class="quiz-body">
                                 <!-- Quick Stats -->
@@ -437,6 +438,7 @@
                                         <div class="table-course-title">
                                             <?php echo htmlspecialchars($quiz['course_title']); ?>
                                         </div>
+                                        <small class="text-muted"><?php echo !empty($quiz['lesson_title']) ? 'Lesson: ' . htmlspecialchars($quiz['lesson_title']) : 'Final quiz'; ?></small>
                                     </td>
                                     <td class="text-center"><?php echo $quiz['question_count']; ?></td>
                                     <td class="text-center"><?php echo $quiz['attempt_count']; ?></td>

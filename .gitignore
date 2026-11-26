@@ -30,3 +30,8 @@ production.env
 /public/academy-files/assets/uploads/**
 !/public/academy-files/assets/uploads/*/
 !/public/academy-files/assets/uploads/*/.gitkeep
+
+# Server logs, a leftover nested copy and sync scratch files
+error_log
+/kconnect-laravel/
+/storage/framework/_*.md5

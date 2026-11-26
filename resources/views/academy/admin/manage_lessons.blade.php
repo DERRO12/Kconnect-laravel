@@ -52,6 +52,12 @@
                         <div class="alert alert-info">
                             <i class="bi bi-info-circle"></i> Drag and drop lessons to reorder them.
                         </div>
+                        <?php if (!$lesson_quizzes_on): ?>
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i> <strong>Lesson quizzes are not switched on yet.</strong>
+                            Run the one-time SQL in <code>database/sql/academy_lesson_quizzes.sql</code> on the K-Academy database (phpMyAdmin, SQL tab), then each lesson's <strong>Quiz</strong> button works.
+                        </div>
+                        <?php endif; ?>
                         
                         <div id="lessonList" class="lesson-list">
                             <?php foreach ($lessons as $index => $lesson): ?>
@@ -75,6 +81,12 @@
                                             </small>
                                         </div>
                                         <div class="col-auto">
+                                            <?php $lq = $lesson_quizzes[(int) $lesson['id']] ?? null; ?>
+                                            <a href="manage_quiz?lesson_id=<?php echo (int) $lesson['id']; ?>" class="btn btn-sm <?php echo $lq && $lq['questions'] > 0 ? 'btn-warning' : 'btn-outline-warning'; ?>"
+                                               title="<?php echo $lq ? 'Lesson quiz: ' . (int) $lq['questions'] . ' question(s). Learners pass it after the video to complete the lesson.' : 'Add a quiz learners must pass to complete this lesson'; ?>">
+                                                <i class="bi bi-patch-question"></i> Quiz<?php echo $lq && $lq['questions'] > 0 ? ' (' . (int) $lq['questions'] . ')' : ''; ?>
+                                            </a>
+                                            
                                             <button class="btn btn-sm btn-outline-primary edit-lesson-btn" data-lesson-id="<?php echo $lesson['id']; ?>">
                                                 <i class="bi bi-pencil"></i>
                                             </button>

@@ -351,11 +351,11 @@
             <h3>Quiz Not Available</h3>
             <p><?php echo $message; ?></p>
             <div class="d-flex gap-2 justify-content-center">
-                <a href="course-player?id=<?php echo $course_id; ?>" class="btn btn-primary">
-                    <i class="bi bi-arrow-left"></i> Back to Course
+                <a href="<?php echo htmlspecialchars($back_url); ?>" class="btn btn-primary">
+                    <i class="bi bi-arrow-left"></i> <?php echo $lesson ? 'Back to Lesson' : 'Back to Course'; ?>
                 </a>
                 <?php if (!empty($previous_attempts)): ?>
-                    <a href="quiz-results?course_id=<?php echo $course_id; ?>" class="btn btn-outline-info">
+                    <a href="quiz-results?id=<?php echo (int) $previous_attempts[0]['id']; ?>" class="btn btn-outline-info">
                         <i class="bi bi-bar-chart"></i> View Previous Results
                     </a>
                 <?php endif; ?>
@@ -367,6 +367,7 @@
             <h2 class="mb-2"><?php echo htmlspecialchars($quiz['title']); ?></h2>
             <p class="mb-0 opacity-75">
                 <i class="bi bi-book me-2"></i>Course: <?php echo htmlspecialchars($quiz['course_title']); ?>
+                <?php if ($lesson): ?><span class="ms-3"><i class="bi bi-play-circle me-1"></i>Lesson: <?php echo htmlspecialchars($lesson['title']); ?></span><?php endif; ?>
             </p>
         </div>
 
@@ -533,7 +534,7 @@ let timeLeft = <?php echo $quiz['time_limit'] ? $quiz['time_limit'] * 60 : 0; ?>
 
 // Initialize the quiz
 document.addEventListener('DOMContentLoaded', function() {
-    updateNavigation();
+    if (document.getElementById('prevBtn')) updateNavButtons();   // e.g. a one-question quiz shows Submit straight away
     loadSavedAnswers();
     
     <?php if ($quiz['time_limit']): ?>

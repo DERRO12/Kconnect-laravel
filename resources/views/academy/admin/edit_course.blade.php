@@ -137,7 +137,7 @@
                 <div class="card-body">
                     <div class="current-thumbnail mb-3 text-center">
                         <?php if ($course['thumbnail']): ?>
-                            <img src="../assets/uploads/courses/<?php echo $course['thumbnail']; ?>" 
+                            <img src="../<?php echo ka_thumb('assets/uploads/courses/' . $course['thumbnail'], 600); ?>" decoding="async" 
                                  alt="Current thumbnail" 
                                  class="img-fluid rounded" 
                                  style="max-height: 200px;">

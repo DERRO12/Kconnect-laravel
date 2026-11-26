@@ -237,7 +237,7 @@
                         @foreach ($allSpotlights as $spotlight)
                         @php
                             $isTeam = $spotlight['spotlight_type'] == 'team';
-                            $rating = floatval($spotlight['rating']);
+                            $rating = max(0, min(5, floatval($spotlight['rating'])));
                             $fullStars = floor($rating);
                             $halfStar = ($rating - $fullStars) >= 0.5;
                             $emptyStars = 5 - $fullStars - ($halfStar ? 1 : 0);
@@ -433,7 +433,7 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="{{ asset('js/main.js') }}"></script>
     
     <script>

@@ -138,7 +138,7 @@
                                         <div class="course-progress-card h-100">
                                             <div class="d-flex align-items-center mb-3">
                                                 <?php if ($thumbnail_exists): ?>
-                                                    <img src="<?php echo $thumbnail_path; ?>" 
+                                                    <img src="<?php echo ka_thumb($thumbnail_path, 120); ?>" loading="lazy" decoding="async" 
                                                          alt="<?php echo htmlspecialchars($course['title']); ?>"
                                                          class="rounded-circle me-3" width="50" height="50">
                                                 <?php else: ?>
@@ -212,7 +212,7 @@
                                                 <td>
                                                     <div class="d-flex align-items-center">
                                                         <?php if ($thumbnail_exists): ?>
-                                                            <img src="<?php echo $thumbnail_path; ?>" 
+                                                            <img src="<?php echo ka_thumb($thumbnail_path, 120); ?>" loading="lazy" decoding="async" 
                                                                  alt="<?php echo htmlspecialchars($enrollment['title']); ?>"
                                                                  class="rounded me-3" width="50" height="50">
                                                         <?php else: ?>

@@ -390,7 +390,7 @@
                         $thumbnail_exists = !empty($course['thumbnail']) && file_exists($thumbnail_path);
                         ?>
                         <?php if ($thumbnail_exists): ?>
-                            <img src="<?php echo $thumbnail_path; ?>" 
+                            <img src="<?php echo ka_thumb($thumbnail_path, 1000); ?>" loading="lazy" decoding="async" 
                                  alt="<?php echo htmlspecialchars($course['title']); ?>">
                         <?php else: ?>
                             <img src="https://placehold.co/600x400/009ada/white?text=K-Academy" 

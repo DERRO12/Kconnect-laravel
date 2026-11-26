@@ -288,6 +288,12 @@ $current_page = basename(kc_self());
                     <span>Whistleblowing</span>
                 </a>
             </li>
+            <li class="menu-item">
+                <a href="surveys" class="{{ in_array($current_page, ['surveys', 'survey-edit', 'survey-results']) ? 'active' : '' }}">
+                    <i class="fas fa-face-smile"></i>
+                    <span>Satisfaction Surveys</span>
+                </a>
+            </li>
             <!-- DIVIDER -->
             <li class="divider"></li>
             

@@ -305,6 +305,14 @@ body.ka-page {
 .ka-page .text-primary { color: #009ada !important; }
 .ka-page .progress-bar { background: linear-gradient(135deg, #009ada 0%, #76bc21 100%); }
 
+/* Colour names the old pages use; some pages defined them in their own <style>, others (Progress) never did */
+.ka-page {
+    --kiboko-primary: #009ada; --kiboko-secondary: #76bc21; --kiboko-blue: #009ada; --kiboko-green: #76bc21;
+    --kiboko-dark: #0f172a; --kiboko-light: #f8fafc; --kiboko-border: #e2e8f0; --kiboko-gray: #64748b; --kiboko-gray-light: #94a3b8;
+}
+/* Content animated with AOS stays visible when the AOS script did not load */
+.ka-no-aos [data-aos] { opacity: 1 !important; transform: none !important; }
+
 /* Learner pages: the K-Academy top bar (fixed). --ka-bar-h is its real height, set by the bar's script
    (it becomes two rows on tablets); 68px until then. */
 body.ka-learner { padding-top: calc(var(--ka-bar-h, 68px) + 8px); background: #f6f8fb; }

@@ -977,7 +977,7 @@ class ContentController extends Controller
             $spotlight_type = H::str($request, 'spotlight_type');
             $achievement_title = trim(H::str($request, 'achievement_title'));
             $achievement_description = trim(H::str($request, 'achievement_description'));
-            $rating = ! empty($request->input('rating')) ? (float) $request->input('rating') : null;
+            $rating = ! empty($request->input('rating')) ? max(0, min(5, (float) $request->input('rating'))) : null;
             $department = trim(H::str($request, 'department'));
             $featured_quote = trim(H::str($request, 'featured_quote'));
             $badge_text = trim(H::str($request, 'badge_text'));

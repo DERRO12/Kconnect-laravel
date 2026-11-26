@@ -76,12 +76,22 @@ class ApiController extends Controller
         $completed = $data['completed'] ?? false;
 
         // Get lesson details
-        $stmt = $pdo->prepare("SELECT course_id FROM lessons WHERE id = ?");
+        $stmt = $pdo->prepare("SELECT id, course_id, video_url, video_type, duration FROM lessons WHERE id = ?");
         $stmt->execute([$lesson_id]);
         $lesson = $stmt->fetch();
 
         if (!$lesson) {
             return kc_json(['error' => 'Lesson not found']);
+        }
+
+        // A lesson with a video is completed only once the whole video has been watched.
+        if ($completed && ($blocked = Academy::videoNotFinished($user_id, $lesson))) {
+            return kc_json(['success' => false, 'message' => $blocked, 'needs_video' => true]);
+        }
+        // ...and, when the lesson has a quiz, once that quiz is passed.
+        if ($completed && ($lessonQuiz = Academy::lessonQuiz((int) $lesson['id'])) && ! Academy::quizPassed($user_id, (int) $lessonQuiz['id'])) {
+            return kc_json(['success' => false, 'message' => 'Pass the lesson quiz to complete this lesson.', 'needs_quiz' => true,
+                'quiz_url' => 'quiz?lesson_id='.(int) $lesson['id']]);
         }
 
         // Update progress
@@ -98,23 +108,10 @@ class ApiController extends Controller
         // Calculate overall course progress
         $progress = ka_calculate_course_progress($pdo, $user_id, $lesson['course_id']);
 
-        // Check if course is completed and generate certificate if needed
+        // All lessons done and (if the course has a quiz) the quiz passed: ask for the certificate.
+        // requestCertificate() checks the rule itself and an admin still approves it.
         if ($progress >= 100) {
-            // Check if user has passed the quiz
-            $stmt = $pdo->prepare("
-                SELECT qr.* FROM quiz_results qr
-                JOIN quizzes q ON qr.quiz_id = q.id
-                WHERE qr.user_id = ? AND q.course_id = ? AND qr.passed = 1
-                ORDER BY qr.created_at DESC
-                LIMIT 1
-            ");
-            $stmt->execute([$user_id, $lesson['course_id']]);
-            $quiz_result = $stmt->fetch();
-
-            if ($quiz_result) {
-                // All lessons done and the quiz passed: ask for the certificate (an admin approves it)
-                Academy::requestCertificate($user_id, (int) $lesson['course_id'], (int) $quiz_result['id']);
-            }
+            Academy::requestCertificate($user_id, (int) $lesson['course_id']);
         }
 
         return kc_json([
@@ -313,6 +310,7 @@ class ApiController extends Controller
         $stmt = $pdo->prepare("INSERT INTO enrollments (user_id, course_id, enrolled_at, status) VALUES (?, ?, NOW(), 'in_progress')");
         if ($stmt->execute([$user_id, $course_id])) {
             ka_log_activity($pdo, $user_id, 'enrolled_course', ['course_id' => $course_id]);
+            \App\Support\AcademyMailer::enrolled((int) $user_id, (int) $course_id);
 
             return kc_json([
                 'success' => true,
@@ -595,8 +593,10 @@ class ApiController extends Controller
         }
 
         $data = json_decode(file_get_contents('php://input'), true);
-        $lesson_id = $data['lesson_id'] ?? 0;
-        $watched_seconds = $data['watched_seconds'] ?? 0;
+        $lesson_id = (int) ($data['lesson_id'] ?? 0);
+        // furthest point reached by playing (the player stops skipping ahead), and the video's length
+        $watched_seconds = max(0, (int) ($data['watched_seconds'] ?? 0));
+        $video_length = max(0, (int) round((float) ($data['video_length'] ?? 0)));
 
         // Get lesson details
         $stmt = $pdo->prepare("SELECT course_id, duration FROM lessons WHERE id = ?");
@@ -607,25 +607,29 @@ class ApiController extends Controller
             return kc_json(['error' => 'Lesson not found']);
         }
 
-        // Update or insert progress
+        $stmt = $pdo->prepare("SELECT watched_duration FROM lesson_progress WHERE user_id = ? AND lesson_id = ?");
+        $stmt->execute([$user_id, $lesson_id]);
+        $before = (int) ($stmt->fetchColumn() ?: 0);
+
+        // Watched time cannot grow faster than real time (2x playback speed allowed).
+        $key = 'ka_watch.'.$lesson_id;
+        $seen = session($key, ['t' => time(), 'len' => 0]);
+        $allowed = $before + (int) ceil((time() - $seen['t']) * 2.2) + 10;
+        $watched = min($watched_seconds, $allowed);
+        if ($video_length > 0) {
+            $watched = min($watched, $video_length);
+        }
+        session([$key => ['t' => time(), 'len' => max((int) $seen['len'], $video_length)]]);
+
+        // Update or insert progress (never goes backwards; completion is done by complete-lesson)
         $stmt = $pdo->prepare("
             INSERT INTO lesson_progress (user_id, lesson_id, course_id, watched_duration, last_accessed)
             VALUES (?, ?, ?, ?, NOW())
             ON DUPLICATE KEY UPDATE
-            watched_duration = VALUES(watched_duration),
-            last_accessed = NOW(),
-            completed = CASE 
-                WHEN VALUES(watched_duration) >= ? THEN 1 
-                ELSE completed 
-            END
+            watched_duration = GREATEST(COALESCE(watched_duration, 0), VALUES(watched_duration)),
+            last_accessed = NOW()
         ");
-        $stmt->execute([
-            $user_id,
-            $lesson_id,
-            $lesson['course_id'],
-            $watched_seconds,
-            $lesson['duration'] * 60 // Convert minutes to seconds
-        ]);
+        $stmt->execute([$user_id, $lesson_id, $lesson['course_id'], $watched]);
 
         // Calculate overall course progress
         $progress = ka_calculate_course_progress($pdo, $user_id, $lesson['course_id']);
