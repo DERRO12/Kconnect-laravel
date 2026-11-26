@@ -6,14 +6,17 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="referrer" content="no-referrer">
 <title>Satisfaction Form - Kiboko Group</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <!--
     Kiboko satisfaction form (anonymous).
     Put this file (and kibokogroup.png) on dashboard.kibokogroup.com. The questions come from
     K-Connect (Admin > Satisfaction Surveys), so nothing here needs editing when questions change.
     Each survey link looks like: satisfaction.php?s=<survey code>
 
-    Privacy: this page loads nothing from other sites (no fonts, analytics or trackers), sends no
-    cookies, and sends only the answers. K-Connect stores the answers with the date only.
+    Privacy: the only outside file is the Lexend font (Google Fonts); there are no analytics or
+    trackers, no cookies, and only the answers are sent. K-Connect stores the answers with the date only.
 -->
 <style>
     :root {
@@ -28,7 +31,7 @@
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-        font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        font-family: 'Lexend', system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
         background: #eef2f7; color: var(--kiboko-dark); min-height: 100vh; padding: 20px;
     }
     .bg-wrapper { position: fixed; inset: 0; z-index: -1; background: #f8fafc; overflow: hidden; }
@@ -141,11 +144,10 @@
 <div class="container">
     <div class="header">
         <img src="kibokogroup.png" alt="Kiboko Group" class="logo" onerror="this.style.display='none'">
-        <h1 id="title">Satisfaction Form</h1>
-        <p class="subtitle">Kiboko Enterprises Ltd • Kiboko Financial Services • Lucid</p>
+        <h1 id="title">Kiboko Group Satisfaction Form</h1>
     </div>
     <div id="app"><div class="loading"><div class="spinner"></div>Loading the survey…</div></div>
-    <div class="footer">© Kiboko Group · Anonymous satisfaction form</div>
+    <div class="footer">© Kiboko Group</div>
 </div>
 
 <noscript><p style="text-align:center;margin-top:20px">Please turn on JavaScript in your browser to fill in this form.</p></noscript>

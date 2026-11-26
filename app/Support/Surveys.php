@@ -321,7 +321,7 @@ class Surveys
         $L = fn (string $text) => ['likert', $text, '', true];
 
         return [
-            'title' => "Kiboko Enterprise Limited Employees' Satisfaction Survey",
+            'title' => 'Kiboko Group Employee Satisfaction Survey',
             'intro' => "Purpose: to understand employee engagement and satisfaction, identify areas for improvement, and strengthen our workplace culture at Kiboko Group. Your responses are anonymous and confidential.\n\n"
                 ."For each statement, choose how much you agree: 1 = Strongly Disagree, 2 = Disagree, 3 = Neutral, 4 = Agree, 5 = Strongly Agree. For the open questions, please give your honest feedback.",
             'thank_you' => 'Thank you for your honest feedback. Your answers were received anonymously and will help make Kiboko a better place to work.',
@@ -391,7 +391,7 @@ class Surveys
                 'Section L: Customer Experience' => [
                     $L('I understand how my role impacts the customer experience.'),
                     $L('I have the necessary tools and training to provide excellent service to customers.'),
-                    $L('Kiboko Enterprise Limited consistently meets customer expectations.'),
+                    $L('Kiboko Group consistently meets customer expectations.'),
                     $L('I feel empowered to address customer issues and feedback effectively.'),
                 ],
                 'Section M: Open-Ended Questions' => [
